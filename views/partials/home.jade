@@ -1,14 +1,2 @@
-h1 {{message}}
 div.container
-  accordion(close-others="oneAtATime")
-    accordion-group(ng-repeat="f in facets",heading="{{f.name}}")
-      a.btn.btn-primary(ng-show="f.isMulti",ng-click="apply()") Apply
-      ul
-        li(ng-repeat="v in f.values")
-          div(ng-show='f.isMulti')
-            label
-              input(type="checkbox",
-                    ng-model="v.isSelected")
-              | {{v.Range}} : ({{v.Hits}})
-          div(ng-hide='f.isMulti')
-            a(ng-click='apply(f.key,v.Range)') {{v.Range}} : ({{v.Hits}})
+  ng-facet(ng-facet-url="/api/facet")

@@ -5,11 +5,13 @@ html(ng-app="app")
         meta(name='viewport',content='width=device-width, initial-scale=1.0')
         base(href='/')
         link(href='lib/bootstrap/2.3.2/css/bootstrap.min.css', rel='stylesheet', media='screen')
+        script(src='lib/linq/linq.min.js')
         script(src='lib/angular/angular.js')
         script(src='lib/angular.ui/ui-bootstrap-0.6.0.min.js')
         script(src='lib/angular.ui/ui-bootstrap-tpls-0.6.0.min.js')
         script(src='app/app.js')
-        script(src='app/controllers.js')
+        script(src='app/directives.js')
+        script(src='app/controllers/home.js')
         title Avtomati
     body
         block body

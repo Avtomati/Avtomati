@@ -1,6 +1,7 @@
 var express = require('express'),
     http = require('http'),
     _ = require('underscore'),
+    Enumerable = require('linq'),
     request = require('request'),
     session = require('ravendb').openSession("http://office.anvol.ge:8080/", "Anvol"),
     path = require('path');
@@ -27,6 +28,10 @@ app.get('/partials/:name', function(req,res){
     var name = req.params.name;
     res.render('partials/' + name);
 });
+app.get('/templates/:name', function(req,res){
+    var name = req.params.name;
+    res.render('templates/' + name);
+});
 /*----------------------*/
 /*-----Data Api------*/
 function getFacetData(where,cb){
@@ -46,30 +51,29 @@ function getFacetData(where,cb){
         }
     });
 }
-app.get('/api/facet',function(req,res){
-    getFacetData("",function(err,result){
-        res.json(result);
-    })
-});
 app.post('/api/facet',function(req,res){
-    var whereClause =  req.body.query
-        .filter(function(f){
-            return !f.isMulti;
-        })
-        .map(function(f){
-            return f.values.map(function(v){
-                return f.name + ":" + v;
-            }).join(" OR ");
-        }).join(" AND ");
-    console.log(whereClause);
-    getFacetData(whereClause,function(err,result){
-        console.log(err,result);
-        res.json(result);
-    })
+    var whereClause = "";
+    var query = req.body.query;
+    if(query){
+        whereClause = query
+            .filter(function(f){
+                return !f.isMulti;
+            })
+            .map(function(f){
+                return f.values.map(function(v){
+                    return f.name + ":" + v;
+                }).join(" OR ");
+            }).join(" AND ");
+        console.log(whereClause);
+    }
+    getFacetData(whereClause,function(err,results){
+        results = results.filter(function(r){
+            return r.values.length > 1;
+        });
+        res.json(results);
+    });
 });
 /*-------------------*/
-
-//app.get('*', routes.index);
 http.createServer(app).listen(app.get('port'), function () {
     console.log('Express server listening on port ' + app.get('port'));
 });

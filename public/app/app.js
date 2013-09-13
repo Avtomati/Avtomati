@@ -15,6 +15,6 @@ app.config(function ($routeProvider, $locationProvider) {
 });
 app.run(function($rootScope){
     $rootScope.$on('filterRequest',function(e,args){
-        log(args);
+        //log(args);
     });
 });
