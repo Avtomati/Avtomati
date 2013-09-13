@@ -29,10 +29,11 @@ app.directive('ngFacet',function(){
                     })
                     .ToArray()
             };
-            $scope.updateFacetData = function(facetUrl){
+            $scope.updateFacetData = function(){
+                console.log($scope.ngFacetUrl);
                 $http({
                     method:'POST',
-                    url:facetUrl,
+                    url:$scope.ngFacetUrl,
                     data:{query:$scope.selectedFacets}
                 }).success(function(data){
                         $scope.facets = data;
@@ -66,7 +67,8 @@ app.directive('ngFacet',function(){
             };
         },
         link: function(scope, iElement, iAttrs){
-            scope.updateFacetData(iAttrs.ngFacetUrl);
+            scope.ngFacetUrl = iAttrs.ngFacetUrl;
+            scope.updateFacetData();
         }
     };
 });
