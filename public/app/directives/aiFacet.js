@@ -5,15 +5,19 @@ app.directive('aiFacet',function(){
         scope:{},
         controller:function($scope,$http){
             $scope.selectedFacets = [];
+            $scope.facets = [];
             function unionFacetArrays(arr1,arr2){
                 return Enumerable.From(arr1)
                     .Concat(Enumerable.From(arr2))
-                    .GroupBy("x=> {key:x.key,name:x.name,isMulti:x.isMulti}")
+                    .GroupBy(function(x){
+                        return JSON.stringify({key: x.key,name: x.name,isMulti: x.isMulti});
+                    })
                     .Select(function(g){
+                        var groupKey = JSON.parse(g.Key());
                         return {
-                            key: g.Key().key,
-                            name: g.Key().name,
-                            isMulti: g.Key().isMulti,
+                            key: groupKey.key,
+                            name: groupKey.name,
+                            isMulti: groupKey.isMulti,
                             values: g.SelectMany("x=> x.values")
                                 .Distinct()
                                 .ToArray()
@@ -27,12 +31,44 @@ app.directive('aiFacet',function(){
                     url:$scope.aiUrl,
                     data:{query:$scope.selectedFacets}
                 }).success(function(data){
-                        $scope.facets = data;
+                        var toRemoveKeys = [];
+                        var oldFacets = Enumerable.From($scope.facets);
+                        var newFacets = Enumerable.From(data);
+                        //shecvlili facetebis valuebis update
+                        $scope.facets.forEach(function(f){
+                            var newFacet = newFacets.Where(function(nf){
+                                return nf.key === f.key;
+                            }).FirstOrDefault();
+                            if(newFacet){
+                                f.values = newFacet.values;
+                            }
+                            else{
+                                toRemoveKeys.push(f.key);
+                            }
+                        });
+                        //zedmeti facetebis cashla
+                        toRemoveKeys.forEach(function(key){
+                            var oldFacet = oldFacets.Where(function(of){
+                                return of.key == key;
+                            }).FirstOrDefault();
+                            var oldFacetIndex = oldFacets.indexOf(oldFacet);
+                            $scope.facets.splice(oldFacetIndex,1);
+                        });
+                        //axali facetebis damateba
+                        newFacets.ForEach(function(f){
+                            var existingFacet = oldFacets.Where(function(of){
+                                return of.key == f.key;
+                            }).FirstOrDefault();
+                            if(!existingFacet){
+                                $scope.facets.push(f);
+                            }
+                        });
                         $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);
                     });
             };
             $scope.apply = function(key,range){
-                var results = $scope.facets
+                var facets = Enumerable.From($scope.facets).ToArray();
+                var results = facets
                     .map(function(f){
                         f.values = f.values
                             .filter(function(v){
@@ -41,8 +77,8 @@ app.directive('aiFacet',function(){
                                 return v.Range;
                             });
                         return f;
-                    }).filter(function(a){
-                        return a.values.length > 0;
+                    }).filter(function(f){
+                        return f.values.length > 0;
                     });
                 $scope.selectedFacets = unionFacetArrays($scope.selectedFacets,results);
                 $scope.updateFacetData();

@@ -1,3 +1,2 @@
-function HomeController($scope,$http){
-
+function HomeController($scope){
 };
