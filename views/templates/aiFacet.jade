@@ -1,9 +1,12 @@
-div.well(ng-repeat="sf in selectedFacets") {{sf.name}}
-  a.btn(ng-repeat="sv in sf.values",
-        ng-click="removeSelected(sf,sv)") {{sv}}
-    i.icon-remove
+div.well
+  p.muted(ng-hide="selectedFacets.length>0") ფილტრები არარის არჩეული
+  div.row(ng-repeat="sf in selectedFacets",style="margin:0px 4px 4px 4px")
+    h5.muted {{sf.name}}
+    span.label.label-info(ng-repeat="sv in sf.values",
+                          style="cursor:pointer;margin:2px",
+                          ng-click="removeSelected(sf,sv)") &times; {{sv}}
 accordion(close-others="false")
   accordion-group(ng-repeat="f in facets",heading="{{f.name}}")
-    ul
-      li(ng-repeat="v in f.values")
-        a.btn.btn-default(ng-click='apply(f.key,v.Range)') {{v.Range}} : ({{v.Hits}})
+      div
+        a.btn.btn-default(ng-click='apply(f.key,v.Range)',
+                          ng-repeat='v in f.values') {{v.Range}} : ({{v.Hits}})
