@@ -36,12 +36,10 @@ app.get('/templates/:name', function(req,res){
 /*----------------------*/
 /*-----Data Api------*/
 app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
-    var whereClause = "";
     var query = req.body.query;
     var indexName = req.route.params.indexName;
     var facetName = req.route.params.facetName;
-    if(query){
-        whereClause = query
+    var whereWithoutMulties = query
             .filter(function(f){
                 return !f.isMulti;
             })
@@ -50,17 +48,41 @@ app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
                     return f.name + ":" + (v.indexOf('[') === 0 ? v : '"' + v + '"');
                 }).join(" OR ");
             }).join(" AND ");
-    }
-    getFacetData(indexName,facetName,whereClause,function(err,results){
-        results.forEach(function(r){
+    var whereWithMulties = query
+            .map(function(f){
+                return f.values.map(function(v){
+                    return f.name + ":" + (v.indexOf('[') === 0 ? v : '"' + v + '"');
+                }).join(" OR ");
+            }).join(" AND ");
+    getFacetData(indexName,facetName,whereWithMulties,function(err,resultsWithMulties){
+        resultsWithMulties.forEach(function(r){
             return r.values = r.values.filter(function(v){
                 return v.Hits > 0;
             });
         });
-        results = results.filter(function(r){
+        resultsWithMulties = resultsWithMulties.filter(function(r){
             return r.values.length > 0;
         });
-        res.json(results);
+        getFacetData(indexName,facetName,whereWithoutMulties,function(err,resultsWithoutMulties){
+            resultsWithoutMulties.forEach(function(r){
+                return r.values = r.values.filter(function(v){
+                    return v.Hits > 0;
+                });
+            });
+            resultsWithoutMulties = resultsWithoutMulties.filter(function(r){
+                return r.values.length > 0;
+            });
+            var r1 = Enumerable.From(resultsWithMulties)
+                            .Where(function(f){
+                                return !f.isMulti;
+                            });
+            var r2 = Enumerable.From(resultsWithoutMulties)
+                           .Where(function(f){
+                                return f.isMulti;
+                            });
+            var results = r2.Concat(r1).ToArray();
+            res.json(results);
+        });
     });
 });
 app.post('/api/indexes/:indexName',function(req,res){
