@@ -3,7 +3,8 @@ var express = require('express'),
     _ = require('underscore'),
     Enumerable = require('linq'),
     request = require('request'),
-    session = require('ravendb').openSession("http://office.anvol.ge:8080/", "Anvol"),
+    rhost = "http://office.anvol.ge:8080/",
+    rdb = "Anvol",
     path = require('path');
 var app = module.exports = express();
 app.set('port', 3000);
@@ -34,8 +35,63 @@ app.get('/templates/:name', function(req,res){
 });
 /*----------------------*/
 /*-----Data Api------*/
-function getFacetData(where,cb){
-    getFacets("http://office.anvol.ge:8080/","Anvol","refebi","facets/refs",where,function(err,results){
+app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
+    var whereClause = "";
+    var query = req.body.query;
+    var indexName = req.route.params.indexName;
+    var facetName = req.route.params.facetName;
+    if(query){
+        whereClause = query
+            .filter(function(f){
+                return !f.isMulti;
+            })
+            .map(function(f){
+                return f.values.map(function(v){
+                    return f.name + ":" + (v.indexOf('[') === 0 ? v : '"' + v + '"');
+                }).join(" OR ");
+            }).join(" AND ");
+    }
+    getFacetData(indexName,facetName,whereClause,function(err,results){
+        results.forEach(function(r){
+            return r.values = r.values.filter(function(v){
+                return v.Hits > 0;
+            });
+        });
+        results = results.filter(function(r){
+            return r.values.length > 0;
+        });
+        res.json(results);
+    });
+});
+app.post('/api/indexes/:indexName',function(req,res){
+    var query = req.body.query;
+    var indexName = req.route.params.indexName;
+    var currentPage = parseInt(req.body.currentPage,10) - 1;
+    var pageSize = parseInt(req.body.pageSize);
+    var whereClause = query.map(function(f){
+                return f.values.map(function(v){
+                    return f.name + ":" + (v.indexOf('[') === 0 ? v : '"' + v + '"');
+                }).join(" OR ");
+            }).join(" AND ");
+    queryIndex(rhost,rdb,indexName,whereClause,currentPage*pageSize,pageSize,
+        function(err,result){
+            var data = {};
+            data.columns = _.map(result.Results[0],function(v,k){
+                return {header:k,name:k};
+            });
+            data.rows = result.Results;
+            data.total = result.TotalResults;
+            res.json(data);
+    });
+});
+/*-------------------*/
+http.createServer(app).listen(app.get('port'), function () {
+    console.log('Express server listening on port ' + app.get('port'));
+});
+function getFacetData(indexName,facetName,where,cb){
+    where = encodeURIComponent(where);
+    getFacets(rhost,rdb,indexName,"facets/"+facetName,where,function(err,results){
+        console.log(results);
         var r = _.map(results,function(value,key){
             return {
                 key:key,
@@ -50,34 +106,7 @@ function getFacetData(where,cb){
             cb(null,r);
         }
     });
-}
-app.post('/api/facet',function(req,res){
-    var whereClause = "";
-    var query = req.body.query;
-    if(query){
-        whereClause = query
-            .filter(function(f){
-                return !f.isMulti;
-            })
-            .map(function(f){
-                return f.values.map(function(v){
-                    return f.name + ":" + v;
-                }).join(" OR ");
-            }).join(" AND ");
-        console.log(whereClause);
-    }
-    getFacetData(whereClause,function(err,results){
-        results = results.filter(function(r){
-            return r.values.length > 1;
-        });
-        res.json(results);
-    });
-});
-/*-------------------*/
-http.createServer(app).listen(app.get('port'), function () {
-    console.log('Express server listening on port ' + app.get('port'));
-});
-
+};
 function getFacets(host,db,index, facetDoc, query, cb) {
     var url = host + "databases/" + db + "/facets/" + index + "?facetDoc=" + facetDoc + "&query=" + query + "&pageSize=128";
     request(url, function (error, response, body) {
@@ -89,3 +118,18 @@ function getFacets(host,db,index, facetDoc, query, cb) {
         }
     });
 };
+function queryIndex(host,db,index,where,skip,take,cb){
+    where = encodeURIComponent(where);
+    var url = host + "databases/" + db + "/indexes/" + index + "?query=" +
+                        where + "&pageSize=" + take + "&start="+skip;
+    console.log(url);
+    request(url, function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+            var result = JSON.parse(body);
+            cb(null,result)
+        } else {
+            cb(error || response.statusCode, null);
+        }
+    });
+};
+

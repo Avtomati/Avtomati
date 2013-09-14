@@ -1,16 +1,8 @@
-app.directive('ngFacetUrl',function(){
-    return {
-        controller: function($scope) {}
-    }
-});
-app.directive('ngFacet',function(){
+app.directive('aiFacet',function(){
     return {
         restrict:'E',
-        templateUrl:'templates/ngFacet',
-        require:'^ngFacetUrl',
-        scope:{
-            ngFacetUrl:'@'
-        },
+        templateUrl:'templates/aiFacet',
+        scope:{},
         controller:function($scope,$http){
             $scope.selectedFacets = [];
             function unionFacetArrays(arr1,arr2){
@@ -30,14 +22,13 @@ app.directive('ngFacet',function(){
                     .ToArray()
             };
             $scope.updateFacetData = function(){
-                console.log($scope.ngFacetUrl);
                 $http({
                     method:'POST',
-                    url:$scope.ngFacetUrl,
+                    url:$scope.aiUrl,
                     data:{query:$scope.selectedFacets}
                 }).success(function(data){
                         $scope.facets = data;
-                        $scope.$emit('filterRequest', $scope.selectedFacets);
+                        $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);
                     });
             };
             $scope.apply = function(key,range){
@@ -67,7 +58,8 @@ app.directive('ngFacet',function(){
             };
         },
         link: function(scope, iElement, iAttrs){
-            scope.ngFacetUrl = iAttrs.ngFacetUrl;
+            scope.aiUrl = iAttrs.aiUrl;
+            scope.indexName = iAttrs.aiUrl.split('/')[3];
             scope.updateFacetData();
         }
     };
