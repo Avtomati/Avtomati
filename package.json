@@ -1,0 +1,30 @@
+{
+  "name": "Avtomati",
+  "version": "0.0.0",
+  "description": "isvris dzalian scrapad",
+  "main": "server.js",
+  "dependencies": {
+    "express": "~3.4.0",
+    "jade": "~0.35.0",
+    "linq": "~1.0.2",
+    "request": "~2.27.0",
+    "underscore": "~1.5.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/VasoBolkvadze/Avtomati.git"
+  },
+  "keywords": [
+    "avtomati"
+  ],
+  "author": "",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/VasoBolkvadze/Avtomati/issues"
+  }
+}
