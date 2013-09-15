@@ -1,4 +1,6 @@
-app.directive('aiFacet',function(){
+angular
+    .module('app')
+    .directive('aiFacet',function(){
     return {
         restrict:'E',
         templateUrl:'templates/aiFacet',

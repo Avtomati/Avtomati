@@ -1,4 +1,6 @@
-app.directive('aiGrid',function(){
+angular
+    .module('app')
+    .directive('aiGrid',function(){
     return {
         restrict:'E',
         templateUrl:'templates/aiGrid',

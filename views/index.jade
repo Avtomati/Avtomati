@@ -1,3 +1,14 @@
 extends layout
+block head
+  style
+    body {
+      padding-top: 60px;
+    }
 block body
+  div.navbar.navbar-inverse.navbar-fixed-top(ng-controller="MenuController")
+    div.navbar-inner
+      ul.nav
+        li(ng-repeat='mi in menuItems')
+          a(ng-href='{{mi.href}}') {{mi.name}}
+  .container-fluid
     div(ng-view)

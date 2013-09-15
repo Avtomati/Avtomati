@@ -1,5 +1,5 @@
 !!!
-html(ng-app="app")
+html(ng-app='app')
     head
         meta(charset='utf-8')
         meta(name='viewport',content='width=device-width, initial-scale=1.0')
@@ -9,10 +9,12 @@ html(ng-app="app")
         script(src='lib/angular/angular.js')
         script(src='lib/angular.ui/ui-bootstrap-0.6.0.min.js')
         script(src='lib/angular.ui/ui-bootstrap-tpls-0.6.0.min.js')
-        script(src='app/app.js')
-        script(src='app/directives/aiFacet.js')
-        script(src='app/directives/aiGrid.js')
-        script(src='app/controllers/home.js')
         title Avtomati
+        block head
     body
-        block body
+      block body
+      script(src='app.js')
+      script(src='app/directives/aiFacet.js')
+      script(src='app/directives/aiGrid.js')
+      script(src='app/controllers.js')
+      script(src='controllers.js')

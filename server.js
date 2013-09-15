@@ -3,6 +3,7 @@ var express = require('express'),
     _ = require('underscore'),
     Enumerable = require('linq'),
     request = require('request'),
+    fs = require('fs'),
     rhost = "http://office.anvol.ge:8080/",
     rdb = "Anvol",
     path = require('path');
@@ -22,16 +23,118 @@ if (app.get('env') === 'production') {
     // TODO
 }
 /*--------Views---------*/
+
+var appFunctions = [
+//    {
+//        index: "clients",
+//        facet: "clients",
+//        idField: "ClientId",
+//        menuId: "Client Management",
+//        commands:[
+//            { route:"AddAnketa" }
+//        ],
+//        idCommands: [
+//            { route:"AddCardNumber" },
+//            { route:"AddChildBirthDate" }
+//        ],
+//        setCommands:[
+//            { route:"Set Discount Percent" }
+//        ]
+//    },
+    {
+        menuId:'Home'
+    },
+    {
+        menuId:'Ai Directives'
+    },
+    {
+        menuId:'examples/ylinji'
+    }
+];
+
+function toId(s){
+    return s.replace(/ /gi,'');
+};
 app.get('/', function index(req, res){
     res.render('index');
 });
-app.get('/partials/:name', function(req,res){
-    var name = req.params.name;
-    res.render('partials/' + name);
+app.get('/getRoutes',function(req,res){
+    res.json([
+        {
+            name:'Home',
+            route:'/home',
+            templateUri:'/dynamic/home'
+        }
+    ]);
+});
+app.get('/app.js',function(req,res){
+    function hasSpecificView(funId){
+        var stat = fs.statSync(path.join(__dirname, 'views','dynamic',funId));
+        return stat.isDirectory();
+    };
+    function getSpecificViewUrl(funId){
+        return 'dynamic/'+ funId;
+    };
+    function getGenericView(){
+        return null;
+    };
+    function toControllerName(s){
+        var segments = s.replace(/\//gi,' ').split(' ');
+        return segments.map(function(seg){
+            return seg[0].toUpperCase() + seg.slice(1);
+        }).join('');
+    };
+    var routes = appFunctions.map(function(fun){
+        var funId = toId(fun.menuId);
+        return {
+            url:'/'+ funId.toLowerCase(),
+            options:{
+                templateUrl: hasSpecificView(funId) ? getSpecificViewUrl(funId) : getGenericView(fun).url,
+                controller: hasSpecificView(funId) ? "'" + toControllerName(fun.menuId) + 'Controller' + "'" : getGenericView(fun).controller
+            }
+        };
+    });
+    var whens = routes.map(function(r){
+        return "when('"+ r.url + "',{templateUrl:'"+ r.options.templateUrl + "',controller:"+ r.options.controller + "})";
+    }).join('.');
+    var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
+                    "$routeProvider."+
+                    whens +
+                    ".otherwise({"+
+                            "redirectTo: '/'"+
+                        "})"+
+                    "});";
+    res.send(appjs);
+});
+app.get('/controllers.js',function(req,res){
+    var files = '';
+    walk(path.join(__dirname, 'views','dynamic')
+        ,function(file){
+            var segments = file.split('.');
+            if(segments[segments.length - 1] === "js"){
+                files += '\n' + fs.readFileSync(file).toString();
+            }
+        }
+        ,function(){
+          res.send(files);
+        }
+    );
+
+});
+app.get('/dynamic/*', function(req,res){
+    var path = req.url.slice(1);
+    var segments = path.split('/');
+    res.render(path + '/' + segments[segments.length - 1]);
 });
 app.get('/templates/:name', function(req,res){
     var name = req.params.name;
     res.render('templates/' + name);
+});
+app.get('/api/getMenu',function(req,res){
+    var items = appFunctions.map(function(fun){
+        return {href:'/#/'+ toId(fun.menuId).toLowerCase(),name:fun.menuId};
+    });
+    res.json(items);
 });
 /*-----Data Api------*/
 app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
@@ -96,7 +199,7 @@ function enrichFacetFromMetadata(facets){
         return {
             key:key,
             name:key,
-            isMulti:key == 'Brendi',
+            isMulti:key == 'Brendi' || key == 'PartiebisRaodenoba',
             values:value.Values
         };
     });
@@ -152,4 +255,99 @@ function buildWhereClause(facets){
             return f.name + ":" + (v.indexOf('[') === 0 ? v : '"' + v + '"');
         }).join(" OR ");
     }).join(" AND ");
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * dir: path to the directory to explore
+ * action(file, stat): called on each file or until an error occurs. file: path to the file. stat: stat of the file (retrived by fs.stat)
+ * done(err): called one time when the process is complete. err is undifined is everything was ok. the error that stopped the process otherwise
+ */
+var walk = function(dir, action, done) {
+
+    // this flag will indicate if an error occured (in this case we don't want to go on walking the tree)
+    var dead = false;
+
+    // this flag will store the number of pending async operations
+    var pending = 0;
+
+    var fail = function(err) {
+        if(!dead) {
+            dead = true;
+            done(err);
+        }
+    };
+
+    var checkSuccess = function() {
+        if(!dead && pending == 0) {
+            done();
+        }
+    };
+
+    var performAction = function(file, stat) {
+        if(!dead) {
+            try {
+                action(file, stat);
+            }
+            catch(error) {
+                fail(error);
+            }
+        }
+    };
+
+    // this function will recursively explore one directory in the context defined by the variables above
+    var dive = function(dir) {
+        pending++; // async operation starting after this line
+        fs.readdir(dir, function(err, list) {
+            if(!dead) { // if we are already dead, we don't do anything
+                if (err) {
+                    fail(err); // if an error occured, let's fail
+                }
+                else { // iterate over the files
+                    list.forEach(function(file) {
+                        if(!dead) { // if we are already dead, we don't do anything
+                            var path = dir + "/" + file;
+                            pending++; // async operation starting after this line
+                            fs.stat(path, function(err, stat) {
+                                if(!dead) { // if we are already dead, we don't do anything
+                                    if (err) {
+                                        fail(err); // if an error occured, let's fail
+                                    }
+                                    else {
+                                        if (stat && stat.isDirectory()) {
+                                            dive(path); // it's a directory, let's explore recursively
+                                        }
+                                        else {
+                                            performAction(path, stat); // it's not a directory, just perform the action
+                                        }
+                                        pending--; checkSuccess(); // async operation complete
+                                    }
+                                }
+                            });
+                        }
+                    });
+                    pending--; checkSuccess(); // async operation complete
+                }
+            }
+        });
+    };
+
+    // start exploration
+    dive(dir);
 };

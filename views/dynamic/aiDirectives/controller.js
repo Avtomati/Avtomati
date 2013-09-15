@@ -1,0 +1,3 @@
+function AiDirectivesController($scope){
+
+}
