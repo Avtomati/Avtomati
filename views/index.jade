@@ -5,10 +5,28 @@ block head
       padding-top: 60px;
     }
 block body
+  script(type="text/ng-template",id="field_renderer.html")
+    a.dropdown-toggle(ng-show="item.subItems.length > 0",
+                      ng-href="{{item.href}}",
+                      data-toggle="dropdown") {{item.name}}
+      b.caret
+    a(ng-hide="item.subItems.length > 0",ng-href="{{item.href}}") {{item.name}}
+    ul.dropdown-menu
+      li(ng-hide="item.subItems.length > 0",
+         ng-repeat="item in item.subItems",
+         ng-include="'field_renderer.html'")
+        a(ng-href="{{item.href}}") {{item.name}}
+      li.dropdown-submenu(ng-show="item.subItems.length > 0",
+                           ng-repeat="item in item.subItems",
+                           ng-include="'field_renderer.html'")
+        a(ng-href="{{item.href}}",data-toggle="drop-down") {{item.name}}
+          ul.dropdown-menu
+            li.dropdown-submenu(ng-repeat="item in item.subItems",ng-include="'field_renderer.html'")
+
   div.navbar.navbar-inverse.navbar-fixed-top(ng-controller="MenuController")
     div.navbar-inner
       ul.nav
-        li(ng-repeat='mi in menuItems')
-          a(ng-href='{{mi.href}}') {{mi.name}}
+        li.dropdown(ng-repeat='item in menuItems',
+                    ng-include="'field_renderer.html'")
   .container-fluid
     div(ng-view)

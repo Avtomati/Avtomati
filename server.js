@@ -69,14 +69,14 @@ app.get('/getRoutes',function(req,res){
 });
 app.get('/app.js',function(req,res){
     function hasSpecificView(funId){
-        var stat = fs.statSync(path.join(__dirname, 'views','dynamic',funId));
-        return stat.isDirectory();
+        var p = path.join(__dirname, 'views','dynamic',funId);
+        return  fs.existsSync(p) && fs.statSync(p).isDirectory();
     };
     function getSpecificViewUrl(funId){
         return 'dynamic/'+ funId;
     };
     function getGenericView(){
-        return null;
+        return {url:'dynamic/generics/default',controller:"''"};
     };
     function toControllerName(s){
         var segments = s.replace(/\//gi,' ').split(' ');
@@ -131,10 +131,53 @@ app.get('/templates/:name', function(req,res){
     res.render('templates/' + name);
 });
 app.get('/api/getMenu',function(req,res){
-    var items = appFunctions.map(function(fun){
-        return {href:'/#/'+ toId(fun.menuId).toLowerCase(),name:fun.menuId};
+    function toHref(s){
+        return '/#/'+toId(s).toLowerCase();
+    };
+
+    function toTree(str, href){
+        var index = str.indexOf('/');
+        if(index == -1){
+            return {
+                name:str,
+                href: href,
+                subItems:[]
+            };
+        }
+        return {
+            name:str.slice(0,index),
+            subItems:[toTree(str.slice(index+1), href)]
+        };
+    };
+    function iterateTree(memo,tree){
+        if(memo[tree.name]){
+            if(tree.href){
+                memo[tree.name].href = tree.href;
+            }
+        }else{
+            memo[tree.name] = {href:tree.href,subItems:{}};
+        }
+        tree.subItems.forEach(function(si){
+            iterateTree(memo[tree.name].subItems,si);
+        });
+    };
+    var trees = appFunctions.map(function(fun){
+        return toTree(fun.menuId, toHref(fun.menuId));
     });
-    res.json(items);
+    var items = trees.reduce(function(memo,tree){
+        iterateTree(memo,tree);
+        return memo;
+    },{});
+    function A(item){
+        return _.map(item, function(value,name){
+            return {
+                name:name,
+                href:value.href,
+                subItems: A(value.subItems)
+            }
+        });
+    };
+    res.json(A(items));
 });
 /*-----Data Api------*/
 app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
