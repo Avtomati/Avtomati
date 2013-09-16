@@ -32,7 +32,7 @@ var appFunctions = [
         idField: "ClientId",
         menuId: "Client Management",
         commands:[
-            { route:"AddAnketa" }
+            { route:"AnketisDamateba" }
         ],
         idCommands: [
             { route:"AddCardNumber" },
@@ -56,6 +56,9 @@ var appFunctions = [
 function toId(s){
     return s.replace(/ /gi,'');
 };
+/*---Client Management----*/
+//app.get('/client')
+/*-------*/
 app.get('/', function index(req, res){
     res.render('index');
 });
@@ -87,16 +90,31 @@ app.get('/app.js',function(req,res){
     };
     var routes = appFunctions.map(function(fun){
         var funId = toId(fun.menuId);
+        var baseUrl = '/'+ funId.toLowerCase();
+        var subRoutes = (fun.commands || []).map(function(cmd){
+            return {
+                url:baseUrl + '/' + cmd.route.toLowerCase(),
+                options:{
+                    templateUrl:getSpecificViewUrl(funId) + '/' + cmd.route,
+                    controller:"'" + toControllerName(fun.menuId+cmd.route) + 'Controller' + "'"
+                }
+            };
+        });
         return {
-            url:'/'+ funId.toLowerCase(),
+            url:baseUrl,
             options:{
                 templateUrl: hasSpecificView(funId) ? getSpecificViewUrl(funId) : getGenericView(fun).url,
                 controller: hasSpecificView(funId) ? "'" + toControllerName(fun.menuId) + 'Controller' + "'" : getGenericView(fun).controller
-            }
+            },
+            commandRoutes:subRoutes
         };
     });
     var whens = routes.map(function(r){
-        return "when('"+ r.url + "',{templateUrl:'"+ r.options.templateUrl + "',controller:"+ r.options.controller + "})";
+        var baseWhens =  "when('"+ r.url + "',{templateUrl:'"+ r.options.templateUrl + "',controller:"+ r.options.controller + "})";
+        var cmdRouteWhens = r.commandRoutes.map(function(sr){
+            return ".when('"+ sr.url + "',{templateUrl:'"+ sr.options.templateUrl + "',controller:"+ sr.options.controller + "})";
+        }).join('');
+        return baseWhens + cmdRouteWhens;
     }).join('.');
     var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
                     "$routeProvider."+
@@ -124,9 +142,12 @@ app.get('/controllers.js',function(req,res){
     );
 });
 app.get('/dynamic/*', function(req,res){
-    var path = req.url.slice(1);
-    var segments = path.split('/');
-    res.render(path + '/' + segments[segments.length - 1]);
+    var p = req.url.slice(1);
+    if(fs.existsSync(path.join(app.get('views'), p) + '.jade')){
+        res.render(p);
+    }else{
+        res.render(p + '/index');
+    }
 });
 app.get('/templates/:name', function(req,res){
     var name = req.params.name;

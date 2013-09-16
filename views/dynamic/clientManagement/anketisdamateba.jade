@@ -1,0 +1,39 @@
+.row-fluid
+  span.offset3.span6
+    h3.page-header ახალი ანკეტა
+    form.form-horizontal
+      div.control-group
+        label.control-label(for="pid") პირადი ნომერი
+        div.controls
+          input.(type="text",id="pid",ng-model="anketa.pid")
+      div.control-group
+        label.control-label(for="firstName") სახელი
+        div.controls
+          input.(type="text",id="firstName",required)
+      div.control-group
+        label.control-label(for="lastName") გვარი
+        div.controls
+          input.(type="text",id="lastName",required)
+      div.control-group
+        label.control-label(for="phone") მობილური ტელ
+        div.controls
+          input.(type="text",id="phone")
+      div.control-group
+        label.control-label(for="childrenBirthDates") ბავშვების დაბადების თარიღები
+        div.controls
+          input.(type="text",id="childrenBirthDates")
+      div.control-group
+        label.control-label(for="cardNumber") ბარათის ნომერი
+        div.controls
+          input.(type="text",id="cardNumber")
+      div.control-group
+        label.control-label(for="discount") ფასდაკლება %
+        div.controls
+          input.(type="text",id="discount")
+      div.control-group
+        div.controls
+          label.checkbox VIP
+            input(type="checkbox")
+      div.control-group
+        div.controls
+          button.btn.btn-primary() შენახვა
