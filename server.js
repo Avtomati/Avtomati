@@ -25,22 +25,23 @@ if (app.get('env') === 'production') {
 /*--------Views---------*/
 
 var appFunctions = [
-//    {
-//        index: "clients",
-//        facet: "clients",
-//        idField: "ClientId",
-//        menuId: "Client Management",
-//        commands:[
-//            { route:"AddAnketa" }
-//        ],
-//        idCommands: [
-//            { route:"AddCardNumber" },
-//            { route:"AddChildBirthDate" }
-//        ],
-//        setCommands:[
-//            { route:"Set Discount Percent" }
-//        ]
-//    },
+    {
+        database:'Anketebi',
+        index: "clients",
+        facet: "clients",
+        idField: "ClientId",
+        menuId: "Client Management",
+        commands:[
+            { route:"AddAnketa" }
+        ],
+        idCommands: [
+            { route:"AddCardNumber" },
+            { route:"AddChildBirthDate" }
+        ],
+        setCommands:[
+            { route:"Set Discount Percent" }
+        ]
+    },
     {
         menuId:'Home'
     },
@@ -48,7 +49,7 @@ var appFunctions = [
         menuId:'Ai Directives'
     },
     {
-        menuId:'examples/ylinji'
+        menuId:'examples/ylinji/minji'
     }
 ];
 
@@ -104,6 +105,7 @@ app.get('/app.js',function(req,res){
                             "redirectTo: '/'"+
                         "})"+
                     "});";
+    res.setHeader('Content-Type','application/javascript');
     res.send(appjs);
 });
 app.get('/controllers.js',function(req,res){
@@ -116,10 +118,10 @@ app.get('/controllers.js',function(req,res){
             }
         }
         ,function(){
-          res.send(files);
+            res.setHeader('Content-Type','application/javascript');
+            res.send(files);
         }
     );
-
 });
 app.get('/dynamic/*', function(req,res){
     var path = req.url.slice(1);
@@ -180,9 +182,10 @@ app.get('/api/getMenu',function(req,res){
     res.json(A(items));
 });
 /*-----Data Api------*/
-app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
+app.post('/api/:databaseName/indexes/:indexName/facets/:facetName',function(req,res){
     var query = req.body.query;
     var indexName = req.route.params.indexName;
+    var databaseName = req.route.params.databaseName;
     var facetName = 'facets/' + req.route.params.facetName;
     var withoutMlties = buildWhereClause(query.filter(function(f){
                                                     return !f.isMulti;
@@ -192,7 +195,7 @@ app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
         getFacetRequest(indexName,facetName,withMlties),
         getFacetRequest(indexName,facetName,withoutMlties)
     ];
-    multiGet(rhost,rdb,requests,function(err,results){
+    multiGet(rhost,databaseName,requests,function(err,results){
         console.log(err,results);
         if(!err){
             var r1 = enrichFacetFromMetadata(results[0].Result.Results)
@@ -216,18 +219,21 @@ app.post('/api/indexes/:indexName/facets/:facetName',function(req,res){
         }
     });
 });
-app.post('/api/indexes/:indexName',function(req,res){
+app.post('/api/:databaseName/indexes/:indexName',function(req,res){
     var query = req.body.query;
     var indexName = req.route.params.indexName;
+    var databaseName = req.route.params.databaseName;
     var currentPage = parseInt(req.body.currentPage,10) - 1;
     var pageSize = parseInt(req.body.pageSize);
     var whereClause = buildWhereClause(query);
-    queryIndex(rhost,rdb,indexName,whereClause,currentPage*pageSize,pageSize,
+    queryIndex(rhost,databaseName,indexName,whereClause,currentPage*pageSize,pageSize,
         function(err,result){
             var data = {};
             data.columns = _.map(result.Results[0],function(v,k){
-                return {header:k,name:k};
-            });
+                return {header: k,name: k};
+            }).filter(function(c){
+                    return c.header.indexOf('_') != 0 && c.header.indexOf('@') != 0;;
+                });
             data.rows = result.Results;
             data.total = result.TotalResults;
             res.json(data);
@@ -242,7 +248,6 @@ function enrichFacetFromMetadata(facets){
         return {
             key:key,
             name:key,
-            isMulti:key == 'Brendi' || key == 'PartiebisRaodenoba',
             values:value.Values
         };
     });

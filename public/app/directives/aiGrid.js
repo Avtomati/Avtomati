@@ -38,7 +38,7 @@ angular
         link: function(scope, iElement, iAttrs){
             scope.aiUrl = iAttrs.aiUrl;
             scope.pageSize = iAttrs.aiPageSize;
-            scope.indexName = iAttrs.aiUrl.split('/')[3];
+            scope.indexName = iAttrs.aiUrl.split('/')[4];
             scope.currentPage = 1;
             scope.subscribe();
         }

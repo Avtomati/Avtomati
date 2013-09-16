@@ -1,3 +1,34 @@
+function mergeLeft(l, r, getkey, actEq, del){
+    var delKeys = {}
+    function reducer(m, x) {
+        var k = getkey(x);
+        m[k] = x;
+        return m;
+    }
+    var xl = l.reduce(reducer ,{});
+    var xr = r.reduce(reducer ,{});
+    for(var key in xl){
+        if(xr[key]){
+            actEq(xl[key], xr[key]);
+        }else{
+            delKeys[key] = true;
+        }
+    }
+    for(var key in xr){
+        if(!xl[key]){
+            l.push(xr[key]);
+        }
+    }
+    if(del){
+        for (var i = 0; i < l.length; i++) {
+            if (delKeys[getkey(l[i])]) {
+                l.splice(i, 1);
+                i--;
+            }
+        }
+    }
+}
+
 angular
     .module('app')
     .directive('aiFacet',function(){
@@ -8,84 +39,56 @@ angular
         controller:function($scope,$http){
             $scope.selectedFacets = [];
             $scope.facets = [];
-            function unionFacetArrays(arr1,arr2){
-                return Enumerable.From(arr1)
-                    .Concat(Enumerable.From(arr2))
-                    .GroupBy(function(x){
-                        return JSON.stringify({key: x.key,name: x.name,isMulti: x.isMulti});
-                    })
-                    .Select(function(g){
-                        var groupKey = JSON.parse(g.Key());
-                        return {
-                            key: groupKey.key,
-                            name: groupKey.name,
-                            isMulti: groupKey.isMulti,
-                            values: g.SelectMany("x=> x.values")
-                                .Distinct()
-                                .ToArray()
-                        };
-                    })
-                    .ToArray()
-            };
             $scope.updateFacetData = function(){
                 $http({
                     method:'POST',
                     url:$scope.aiUrl,
                     data:{query:$scope.selectedFacets}
                 }).success(function(data){
-                        var toRemoveKeys = [];
-                        var oldFacets = Enumerable.From($scope.facets);
-                        var newFacets = Enumerable.From(data);
-                        //shecvlili facetebis valuebis update
-                        $scope.facets.forEach(function(f){
-                            var newFacet = newFacets.Where(function(nf){
-                                return nf.key === f.key;
-                            }).FirstOrDefault();
-                            if(newFacet){
-                                f.values = newFacet.values;
+                        mergeLeft($scope.facets, data
+                            ,function(x){return x.key;}
+                            ,function(lf,rf){
+                                lf.isMulti = rf.isMulti;
+                                mergeLeft(lf.values, rf.values
+                                    ,function(x){return x.Range;}
+                                    ,function(lr,rr){
+                                        if(lr.Hits != rr.Hits){
+                                            lr.Hits = rr.Hits;
+                                        }
+                                    }
+                                    , true
+                                )
                             }
-                            else{
-                                toRemoveKeys.push(f.key);
-                            }
-                        });
-                        //zedmeti facetebis cashla
-                        toRemoveKeys.forEach(function(key){
-                            var oldFacet = oldFacets.Where(function(of){
-                                return of.key == key;
-                            }).FirstOrDefault();
-                            var oldFacetIndex = oldFacets.indexOf(oldFacet);
-                            $scope.facets.splice(oldFacetIndex,1);
-                        });
-                        //axali facetebis damateba
-                        newFacets.ForEach(function(f){
-                            var existingFacet = oldFacets.Where(function(of){
-                                return of.key == f.key;
-                            }).FirstOrDefault();
-                            if(!existingFacet){
-                                $scope.facets.push(f);
-                            }
-                        });
+                            ,true
+                        );
                         $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);
                     });
             };
-            $scope.apply = function(key,range){
-                var facets = Enumerable.From($scope.facets).ToArray();
-                var results = facets
-                    .map(function(f){
-                        f.values = f.values
-                            .filter(function(v){
-                                return v.isSelected || (f.key == key && v.Range == range);
-                            }).map(function(v){
+            $scope.apply = function(key, range){
+                var selctedRanges = $scope.facets
+                    .map(function(f) {
+                        var values = f.values.filter(function(v){
+                            return v.isSelected || (f.key == key && v.Range == range);
+                        }).map(function(v){
                                 return v.Range;
                             });
-                        return f;
+                        return {key: f.key, name: f.name, isMulti: f.isMulti, values:values};
                     }).filter(function(f){
                         return f.values.length > 0;
                     });
-                $scope.selectedFacets = unionFacetArrays($scope.selectedFacets,results);
+                mergeLeft($scope.selectedFacets, selctedRanges
+                    ,function(x){return x.key;}
+                    ,function(lf,rf){
+                        mergeLeft(lf.values, rf.values
+                            ,function(x){return x;}
+                            ,function(lr, rr){
+                            }
+                        )
+                    }
+                );
                 $scope.updateFacetData();
             };
-            $scope.removeSelected = function(selectedFacet,selectedValue){
+            $scope.removeSelected = function(selectedFacet, selectedValue){
                 var valueIndex = selectedFacet.values.indexOf(selectedValue);
                 selectedFacet.values.splice(valueIndex, 1);
                 if(selectedFacet.values.length == 0){
@@ -97,7 +100,8 @@ angular
         },
         link: function(scope, iElement, iAttrs){
             scope.aiUrl = iAttrs.aiUrl;
-            scope.indexName = iAttrs.aiUrl.split('/')[3];
+            scope.indexName = iAttrs.aiUrl.split('/')[4];
+            scope.oldData = {};
             scope.updateFacetData();
         }
     };
