@@ -1,26 +1,27 @@
 var path = require('path'),
     _ = require('underscore'),
     fs = require('fs');
+    
 var db = [
         {
             index: "/api/Anvol/indexes/DocumentsByTags",
             facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
             idField: "ClientId",
-            menuId: "Databases/Anvol",
+            menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
             commands:[]
         },
         {
             index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
             facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
             idField: "ClientId",
-            menuId: "Databases/Anketebi",
+            menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
             commands:[]
         },
     {
         database:'Anketebi',
         index: "/api/Anketebi/indexes/Klientebi",
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
-        idField: "ClientId",
+        idField: "klientisId",
         menuId: "Reportebi/Client Management",
         commands:[
             {
@@ -62,27 +63,62 @@ var db = [
         menuId:'examples/ylinji/minji'
     }
 ];
+
+//app.js generation functions
+function getAppFunctions(){
+    var ngRoutes = [];
+    db.forEach(function(fun){
+        var funId = toId(fun.menuId);
+        var baseUrl = '/'+ funId.toLowerCase();
+        fun.commands = fun.commands || [];
+        if(fun.index){
+            ngRoutes.push({
+                url: baseUrl, nodeTemplatePath: "templates/listview/index.jade",
+                facet: fun.facet, index: fun.index,
+                commands: fun.commands, idField: fun.idField,
+                templateUrl: baseUrl, controller: 'ListViewController'
+            });
+            fun.commands.forEach(function(cmd){
+                ngRoutes.push({
+                    url: baseUrl+"/"+cmd.name, nodeTemplatePath: "templates/commands/default.jade",
+                    name:cmd.name,
+                    fields:cmd.fields 
+                });
+            });
+            if(fun.idField){
+                ngRoutes.push({
+                    url: baseUrl + "/:id", nodeTemplatePath:"templates/listview/detail.jade",
+                    templateUrl: baseUrl + "/:id", controller:'DetailController'
+                });    
+            }
+        }else{
+          ngRoutes.push({
+                url:baseUrl, nodeTemplatePath:"templates/listview/index.jade",
+                facet:fun.facet, index:fun.index,
+                commands:fun.commands, idField:fun.idField,
+                templateUrl:getSpecificViewUrl(funId), controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'"
+            });    
+        }
+    });
+    return ngRoutes;
+};
+
+
 function start(app){
     var ngRoutes = getAppFunctions();
     //console.log(JSON.stringify(ngRoutes,null,4));
     ngRoutes.forEach(function(r){
-        app.get(r.url,function(req,res){
-            res.render('templates/listview/index',r);
-        });
-        r.commands = r.commands || [];
-        r.commands.forEach(function(cmd){
-            cmd.templateUrl = r.url + '/' + cmd.name;
-            app.get(cmd.templateUrl,function(req,res){
-                res.render('templates/commands/default',cmd);
-            });
+        console.log(r);
+        app.get(r.url, function(req,res) {
+            res.render(r.nodeTemplatePath, r);
         });
     });
     app.get('/app.js',function(req,res){
         var whens = ngRoutes
                         .map(function(r){
             return  "when('"+ r.url + "',{templateUrl:'"+
-                r.options.templateUrl + "',controller:"+
-                r.options.controller + "})";
+                r.templateUrl + "',controller:"+
+                r.controller + "})";
         }).join('.');
         var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
             "$routeProvider."+
@@ -151,25 +187,6 @@ function iterateTree(memo,tree){
     }
     tree.subItems.forEach(function(si){
         iterateTree(memo[tree.name].subItems,si);
-    });
-};
-//app.js generation functions
-function getAppFunctions(){
-    return db.map(function(fun){
-        var funId = toId(fun.menuId);
-        var baseUrl = '/'+ funId.toLowerCase();
-        var templateUrl = fun.index ? baseUrl : getSpecificViewUrl(funId);
-        var ctrl = fun.index ? 'ListViewController' : "'" + toControllerName(fun.menuId) + 'Controller' + "'";
-        return {
-            facet:fun.facet,
-            index:fun.index,
-            url:baseUrl,
-            commands:fun.commands,
-            options:{
-                templateUrl: templateUrl,
-                controller: ctrl
-            }
-        };
     });
 };
 function hasSpecificView(funId){

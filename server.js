@@ -195,8 +195,10 @@ function buildWhereClause(facets){
 
 /**
  * dir: path to the directory to explore
- * action(file, stat): called on each file or until an error occurs. file: path to the file. stat: stat of the file (retrived by fs.stat)
- * done(err): called one time when the process is complete. err is undifined is everything was ok. the error that stopped the process otherwise
+ * action(file, stat): called on each file or until an error occurs. 
+ * file: path to the file. stat: stat of the file (retrived by fs.stat)
+ * done(err): called one time when the process is complete. 
+ * err is undifined is everything was ok. the error that stopped the process otherwise
  */
 var walk = function(dir, action, done) {
 

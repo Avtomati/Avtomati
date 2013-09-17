@@ -1,4 +1,4 @@
-function ListViewController($scope,$rootScope,$http,$modal){
+function ListViewController($scope,$rootScope,$http,$modal,$location){
     $scope.q=[];
     $scope.currentPage = 1;
     $scope.$watch('indexUrl',function(v){
@@ -29,6 +29,11 @@ function ListViewController($scope,$rootScope,$http,$modal){
                 $scope.grid = data;
             });
     };
+    $scope.showDetailView = function(url, row){
+        console.log($location.path());
+        $location.path(url + "/" + encodeURIComponent(row[$scope.idField]));
+        console.log($location.path());
+    }
     $scope.showCommand = function(templateUrl){
         var modalInstance = $modal.open({
             templateUrl: templateUrl,
@@ -43,4 +48,7 @@ function ListViewController($scope,$rootScope,$http,$modal){
             console.log(model);
         });
     };
+}
+
+function DetailController($scope,$rootScope,$http,$modal){
 }
