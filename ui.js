@@ -24,13 +24,17 @@ var db = [
         menuId: "Reportebi/Client Management",
         commands:[
             {
-                name:'AnketisDamateba',
-                textFields:[
+                name:'DaamateAnketa',
+                fields:[
                     {name:'pid',label:'პირადი ნომერი'},
-                    {name:'firstName',label:'სახელი'}
-                ],
-                checkFields:[
-                    {name:'vip',label:'VIP'}
+                    {name:'firstName',label:'სახელი'},
+                    {name:'lastName',label:'გვარი'},
+                    {name:'birthDate',label:'დაბ. თარიღი',type:'date'},
+                    {name:'vip',label:'VIP',type:'check'},
+                    {name:'phone',label:'ტელეფონი'},
+                    {name:'mail',label:'e-Mail'},
+                    {name:'childrenBirthDates',label:'ბავშვების დაბ. თარიღები'},
+                    {name:'cardNumber',label:'ბარათის ნომერი'}
                 ]
             }
         ],

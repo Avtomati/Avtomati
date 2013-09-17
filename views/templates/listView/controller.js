@@ -32,9 +32,15 @@ function ListViewController($scope,$rootScope,$http,$modal){
     $scope.showCommand = function(templateUrl){
         var modalInstance = $modal.open({
             templateUrl: templateUrl,
-            controller: function($scope){
-                
+            controller: function($scope,$modalInstance){
+                $scope.model = {};
+                $scope.execute = function(){
+                    $modalInstance.close($scope.model);
+                };
             }
+        });
+        modalInstance.result.then(function (model) {
+            console.log(model);
         });
     };
 }

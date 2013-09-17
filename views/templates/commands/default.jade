@@ -1,18 +1,24 @@
 .container-fluid
   .row-fluid
-    span.offset3.span6
       h3.page-header=name
       form.form-horizontal
-        each textfield in textFields
-          div.control-group
-            label.control-label(for=textfield.name)=textfield.label
-            div.controls
-              input(type="text",id=textfield.name,ng-model="#{'model.'+textfield.name}")
-        each checkField in checkFields
-          div.control-group
-            div.controls
-              label.checkbox=checkField.label
-                input(type="checkbox",ng-model="#{'model.'+checkField.name}")
+        each field in fields
+          case field.type
+            when 'check'
+              div.control-group
+                div.controls
+                  label.checkbox=field.label
+                    input(type="checkbox",ng-model="#{'model.'+field.name}")
+            when 'date'
+              div.control-group
+                label.control-label(for=field.name)=field.label
+                div.controls
+                  input(type="text",id=field.name,datepicker-popup="dd-MM-yyyy",ng-model="#{'model.'+field.name}")
+            default
+              div.control-group
+                label.control-label(for=field.name)=field.label
+                div.controls
+                  input(type="text",id=field.name,ng-model="#{'model.'+field.name}")
         div.control-group
           div.controls
-            button.btn.btn-primary() შენახვა
+            button.btn.btn-primary(ng-click="execute()") შესრულება
