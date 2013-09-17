@@ -3,8 +3,8 @@ var path = require('path'),
     fs = require('fs');
 var db = [
         {
-            index: "/api/Anvol/indexes/Raven%2FDocumentsByEntityName",
-            facet: "/api/Anvol/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+            index: "/api/Anvol/indexes/DocumentsByTags",
+            facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
             idField: "ClientId",
             menuId: "Databases/Anvol",
             commands:[]
