@@ -10,7 +10,7 @@ block body
                       ng-href="{{item.href}}",
                       data-toggle="dropdown") {{item.name}}
       b.caret
-    a(ng-hide="item.subItems.length > 0",ng-href="{{item.href}}") {{item.name}}
+    a(ng-hide="item.subItems.length > 0",ng-href="{{item.href}}?a=1") {{item.name}}
     ul.dropdown-menu
       li(ng-hide="item.subItems.length > 0",
          ng-repeat="item in item.subItems",

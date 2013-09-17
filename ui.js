@@ -2,6 +2,20 @@ var path = require('path'),
     _ = require('underscore'),
     fs = require('fs');
 var db = [
+        {
+            index: "/api/Anvol/indexes/Raven%2FDocumentsByEntityName",
+            facet: "/api/Anvol/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+            idField: "ClientId",
+            menuId: "Databases/Anvol",
+            commands:[]
+        },
+        {
+            index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
+            facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+            idField: "ClientId",
+            menuId: "Databases/Anketebi",
+            commands:[]
+        },
     {
         database:'Anketebi',
         index: "/api/Anketebi/indexes/Klientebi",
