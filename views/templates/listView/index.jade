@@ -1,0 +1,27 @@
+div.row-fluid(ng-init="indexUrl='#{index}';")
+  div.span3
+    ai-facet(ai-url=facet)
+  div.span9
+    table.table.table-bordered.table-striped.table-hover.table-condensed
+      thead
+        tr
+          th(ng-repeat="col in grid.columns") {{col.header}}
+      tbody
+        tr(ng-repeat="row in grid.rows",ng-click="viewItem(row)")
+          td(ng-repeat="col in grid.columns") {{row[col.name]}}
+.navbar.navbar-inverse.navbar-fixed-bottom
+  .navbar-inner
+    .container-fluid
+      .row-fluid
+        div.span8
+          .btn-toolbar
+            .btn-group
+              each cmd in commands
+                a.btn.btn-primary(ng-click="showCommand('#{cmd.templateUrl}')")=cmd.name
+        div.span4
+          pagination.pull-right(total-items="grid.total",
+                                page="currentPage",
+                                items-per-page="5",
+                                max-size="5",
+                                boundary-links="true",
+                                style="cursor:pointer;")

@@ -3,9 +3,9 @@ var express = require('express'),
     _ = require('underscore'),
     Enumerable = require('linq'),
     request = require('request'),
+    ui = require('./ui'),
     fs = require('fs'),
     rhost = "http://office.anvol.ge:8080/",
-    rdb = "Anvol",
     path = require('path');
 var app = module.exports = express();
 app.set('port', 3000);
@@ -24,111 +24,17 @@ if (app.get('env') === 'production') {
 }
 /*--------Views---------*/
 
-var appFunctions = [
-    {
-        database:'Anketebi',
-        index: "clients",
-        facet: "clients",
-        idField: "ClientId",
-        menuId: "Client Management",
-        commands:[
-            { route:"AnketisDamateba" }
-        ],
-        idCommands: [
-            { route:"AddCardNumber" },
-            { route:"AddChildBirthDate" }
-        ],
-        setCommands:[
-            { route:"Set Discount Percent" }
-        ]
-    },
-    {
-        menuId:'Home'
-    },
-    {
-        menuId:'Ai Directives'
-    },
-    {
-        menuId:'examples/ylinji/minji'
-    }
-];
 
-function toId(s){
-    return s.replace(/ /gi,'');
-};
 /*---Client Management----*/
 //app.get('/client')
 /*-------*/
+ui.start(app);
 app.get('/', function index(req, res){
     res.render('index');
 });
-app.get('/getRoutes',function(req,res){
-    res.json([
-        {
-            name:'Home',
-            route:'/home',
-            templateUri:'/dynamic/home'
-        }
-    ]);
-});
-app.get('/app.js',function(req,res){
-    function hasSpecificView(funId){
-        var p = path.join(__dirname, 'views','dynamic',funId);
-        return  fs.existsSync(p) && fs.statSync(p).isDirectory();
-    };
-    function getSpecificViewUrl(funId){
-        return 'dynamic/'+ funId;
-    };
-    function getGenericView(){
-        return {url:'dynamic/generics/default',controller:"''"};
-    };
-    function toControllerName(s){
-        var segments = s.replace(/\//gi,' ').split(' ');
-        return segments.map(function(seg){
-            return seg[0].toUpperCase() + seg.slice(1);
-        }).join('');
-    };
-    var routes = appFunctions.map(function(fun){
-        var funId = toId(fun.menuId);
-        var baseUrl = '/'+ funId.toLowerCase();
-        var subRoutes = (fun.commands || []).map(function(cmd){
-            return {
-                url:baseUrl + '/' + cmd.route.toLowerCase(),
-                options:{
-                    templateUrl:getSpecificViewUrl(funId) + '/' + cmd.route,
-                    controller:"'" + toControllerName(fun.menuId+cmd.route) + 'Controller' + "'"
-                }
-            };
-        });
-        return {
-            url:baseUrl,
-            options:{
-                templateUrl: hasSpecificView(funId) ? getSpecificViewUrl(funId) : getGenericView(fun).url,
-                controller: hasSpecificView(funId) ? "'" + toControllerName(fun.menuId) + 'Controller' + "'" : getGenericView(fun).controller
-            },
-            commandRoutes:subRoutes
-        };
-    });
-    var whens = routes.map(function(r){
-        var baseWhens =  "when('"+ r.url + "',{templateUrl:'"+ r.options.templateUrl + "',controller:"+ r.options.controller + "})";
-        var cmdRouteWhens = r.commandRoutes.map(function(sr){
-            return ".when('"+ sr.url + "',{templateUrl:'"+ sr.options.templateUrl + "',controller:"+ sr.options.controller + "})";
-        }).join('');
-        return baseWhens + cmdRouteWhens;
-    }).join('.');
-    var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
-                    "$routeProvider."+
-                    whens +
-                    ".otherwise({"+
-                            "redirectTo: '/'"+
-                        "})"+
-                    "});";
-    res.setHeader('Content-Type','application/javascript');
-    res.send(appjs);
-});
 app.get('/controllers.js',function(req,res){
     var files = '';
-    walk(path.join(__dirname, 'views','dynamic')
+    walk(path.join(__dirname, 'views')
         ,function(file){
             var segments = file.split('.');
             if(segments[segments.length - 1] === "js"){
@@ -141,66 +47,10 @@ app.get('/controllers.js',function(req,res){
         }
     );
 });
-app.get('/dynamic/*', function(req,res){
-    var p = req.url.slice(1);
-    if(fs.existsSync(path.join(app.get('views'), p) + '.jade')){
-        res.render(p);
-    }else{
-        res.render(p + '/index');
-    }
-});
+
 app.get('/templates/:name', function(req,res){
     var name = req.params.name;
     res.render('templates/' + name);
-});
-app.get('/api/getMenu',function(req,res){
-    function toHref(s){
-        return '/#/'+toId(s).toLowerCase();
-    };
-
-    function toTree(str, href){
-        var index = str.indexOf('/');
-        if(index == -1){
-            return {
-                name:str,
-                href: href,
-                subItems:[]
-            };
-        }
-        return {
-            name:str.slice(0,index),
-            subItems:[toTree(str.slice(index+1), href)]
-        };
-    };
-    function iterateTree(memo,tree){
-        if(memo[tree.name]){
-            if(tree.href){
-                memo[tree.name].href = tree.href;
-            }
-        }else{
-            memo[tree.name] = {href:tree.href,subItems:{}};
-        }
-        tree.subItems.forEach(function(si){
-            iterateTree(memo[tree.name].subItems,si);
-        });
-    };
-    var trees = appFunctions.map(function(fun){
-        return toTree(fun.menuId, toHref(fun.menuId));
-    });
-    var items = trees.reduce(function(memo,tree){
-        iterateTree(memo,tree);
-        return memo;
-    },{});
-    function A(item){
-        return _.map(item, function(value,name){
-            return {
-                name:name,
-                href:value.href,
-                subItems: A(value.subItems)
-            }
-        });
-    };
-    res.json(A(items));
 });
 /*-----Data Api------*/
 app.post('/api/:databaseName/indexes/:indexName/facets/:facetName',function(req,res){

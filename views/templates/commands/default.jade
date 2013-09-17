@@ -1,0 +1,18 @@
+.container-fluid
+  .row-fluid
+    span.offset3.span6
+      h3.page-header=name
+      form.form-horizontal
+        each textfield in textFields
+          div.control-group
+            label.control-label(for=textfield.name)=textfield.label
+            div.controls
+              input(type="text",id=textfield.name,ng-model="#{'model.'+textfield.name}")
+        each checkField in checkFields
+          div.control-group
+            div.controls
+              label.checkbox=checkField.label
+                input(type="checkbox",ng-model="#{'model.'+checkField.name}")
+        div.control-group
+          div.controls
+            button.btn.btn-primary() შენახვა
