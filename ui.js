@@ -3,21 +3,33 @@ var path = require('path'),
     fs = require('fs');
     
 var db = [
-        {
-            index: "/api/Anvol/indexes/DocumentsByTags",
-            facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
-            idField: "ClientId",
-            menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
-            commands:[]
-        },
-        {
-            index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
-            facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
-            idField: "ClientId",
-            menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
-            commands:[]
-        },
     {
+        index: "/api/Anvol/indexes/refebi",
+        facet: "/api/Anvol/indexes/refebi/facets/refs",
+        idField: "Ref",
+        menuId: "Produktebi",
+        fields: {
+            Ref: { lable:'Ref კოდი'},
+            Eans: { lable: 'ეან კოდები'},
+            Brendi: { lable: 'ბრენდი'},
+            Kvebrendi: { lable: 'ქვებრენდი'},
+            Dasakheleba: { lable: 'დასახელება'},
+            Fasi: { lable:'ფასი' },
+            Partiebi: {
+                    lable:'Partiebi',
+                    fields : {
+                        MomcodeblisRefi: { lable:'MomcodeblisRefi' },
+                        Dasakheleba: { lable:'Dasakheleba' },
+                        Eans: { lable:'Eans' },
+                        Raodenoba: { lable:'Raodenoba' },
+                        ErtFasi: { lable:'ErtFasi' },
+                        Shenishvna: { lable:'Shenishvna' }
+                    }
+                }
+            
+        }
+
+    }, {
         database:'Anketebi',
         index: "/api/Anketebi/indexes/Klientebi",
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
@@ -56,41 +68,21 @@ var db = [
         setCommands:[
             { name:"Set Discount Percent" }
         ]
-    },
-    {
-        index: "/api/Anvol/indexes/refebi",
-        facet: "/api/Anvol/indexes/refebi/facets/refs",
-        idField: "Ref",
-        menuId: "Reportebi/Produktebi",
-        fields: {
-            Ref: { lable:'Ref კოდი'},
-            Eans: { lable: 'ეან კოდები'},
-            Brendi: { lable: 'ბრენდი'},
-            Kvebrendi: { lable: 'ქვებრენდი'},
-            Dasakheleba: { lable: 'დასახელება'},
-            Fasi: { lable:'ფასი' },
-            Partiebi: {
-                    lable:'Partiebi',
-                    fields : {
-                        MomcodeblisRefi: { lable:'MomcodeblisRefi' },
-                        Dasakheleba: { lable:'Dasakheleba' },
-                        Eans: { lable:'Eans' },
-                        Raodenoba: { lable:'Raodenoba' },
-                        ErtFasi: { lable:'ErtFasi' },
-                        Shenishvna: { lable:'Shenishvna' }
-                    }
-                }
-            
-        }
-
-    },
-    {
+    }, {
+        index: "/api/Anvol/indexes/DocumentsByTags",
+        facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
+        menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
+        commands:[]
+    }, {
+        index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
+        facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
+        commands:[]
+    }, {
         menuId:'Home'
-    },
-    {
+    }, {
         menuId:'Ai Directives'
-    },
-    {
+    }, {
         menuId:'examples/ylinji/minji'
     }
 ];

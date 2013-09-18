@@ -55,7 +55,6 @@ function DetailController($scope,$rootScope,$http,$modal,$routeParams,$location)
     $scope.title = segments[segments.length-2] + " (" + decodeURIComponent(segments[segments.length-1])+")";
     $http({method:'GET', url: $location.path()})
         .success(function(data){
-            console.log(data);
             $scope.obj = data;
         });
 }
