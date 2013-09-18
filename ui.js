@@ -22,7 +22,7 @@ var db = [
         index: "/api/Anketebi/indexes/Klientebi",
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
         idField: "klientisId",
-        menuId: "Reportebi/Client Management",
+        menuId: "Client Management",
         commands:[
             {
                 name:'DaamateAnketa',
