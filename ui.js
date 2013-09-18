@@ -31,7 +31,7 @@ var db = [
             "phone": { lable:'ტელეფონი'},
             "address": { lable:'მისამართი'},
             "email": { lable:'ელ. ფოსტა'},
-            "discount": { lable:'დისქოუნთ პროცენტი'},
+            "discount": { lable:'დისქოუნთ პროცენტი'}
         },
         commands:[
             {
@@ -61,7 +61,25 @@ var db = [
         index: "/api/Anvol/indexes/refebi",
         facet: "/api/Anvol/indexes/refebi/facets/refs",
         idField: "Ref",
-        menuId: "Reportebi/Produktebi"
+        menuId: "Reportebi/Produktebi",
+        fields: {
+            Ref: { lable:'Ref კოდი'},
+            Eans: { lable: 'ეან კოდები'},
+            EanebisRaodenoba: { lable:'EanebisRaodenoba' },
+            Partiebi: {
+                    lable:'Partiebi',
+                    fields : {
+                        MomcodeblisRefi: { lable:'MomcodeblisRefi' },
+                        Dasakheleba: { lable:'Dasakheleba' },
+                        Eans: { lable:'Eans' },
+                        Raodenoba: { lable:'Raodenoba' },
+                        ErtFasi: { lable:'ErtFasi' },
+                        Shenishvna: { lable:'Shenishvna' }
+                    }
+                }
+            
+        }
+
     },
     {
         menuId:'Home'

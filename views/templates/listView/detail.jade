@@ -1,10 +1,30 @@
-h1 Detail
-mixin render(obj2)
+h1 {{title}}
+mixin renderList(fields, path)
   table.table.table-bordered.table-striped.table-hover.table-condensed
     tbody
-      each field, key in obj2
+      thead
+        tr
+          each field, key in fields
+            th=field.lable
+      tbody
+        tr(ng-repeat="row in #{path}")
+          each field, key in fields
+            td
+              if field.fields
+                mixin renderList(field.fields, path + "." + key)
+              else
+                {{row.#{key}}}
+
+mixin renderObj(fields, path)
+  table.table.table-bordered.table-striped.table-hover.table-condensed
+    tbody
+      each field, key in fields
         tr()
           td()= field.lable
-          td {{obj.#{key}}}
+          td
+            if field.fields
+              mixin renderList(field.fields, path + "." + key)
+            else
+              {{#{path}.#{key}}}
 if fields
-  mixin render(fields)
+  mixin renderObj(fields, 'obj')
