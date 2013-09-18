@@ -1,5 +1,6 @@
 var path = require('path'),
     _ = require('underscore'),
+    domain = require('./domain')(),
     fs = require('fs');
     
 var db = [
@@ -57,8 +58,10 @@ var db = [
                     {name:'phone',label:'ტელეფონი'},
                     {name:'mail',label:'e-Mail'},
                     {name:'childrenBirthDates',label:'ბავშვების დაბ. თარიღები'},
-                    {name:'cardNumber',label:'ბარათის ნომერი'}
-                ]
+                    {name:'cardNumber',label:'ბარათის ნომერი'},
+                    {name:'discount',label:'დისქოუნთ პროცენტი'}
+                ],
+                handler:domain.daamateAnketa
             }
         ],
         idCommands: [
@@ -97,52 +100,60 @@ function getAppFunctions(queryIndex){
         if(fun.index){
             ngRoutes.push({
                 url: baseUrl, templateUrl: baseUrl, controller: 'ListViewController',
-                requestHandler:(
+                registerRoute:(
                     function(){
-                        return function(req, res) {
-                            res.render("templates/listview/index.jade", {
-                                url: baseUrl, facet: fun.facet, index: fun.index,
-                                commands: fun.commands, idField: fun.idField
+                        return function(app) {
+                            app.get(baseUrl, function(req,res){
+                                res.render("templates/listview/index.jade", {
+                                    url: baseUrl, facet: fun.facet, index: fun.index,
+                                    commands: fun.commands, idField: fun.idField
+                                });
                             });
                         }
                     }())
             });
             fun.commands.forEach(function(cmd){
+                var commandUrl = baseUrl + "/" + cmd.name;
                 ngRoutes.push({
-                    url: baseUrl + "/" + cmd.name, 
-                    requestHandler:(
+                    url: commandUrl,
+                    registerRoute:(
                         function(){
-                            return function(req, res) {
-                                res.render("templates/commands/default.jade", {
-                                   name:cmd.name, fields:cmd.fields
+                            return function(app) {
+                                app.get(commandUrl, function(req,res){
+                                    res.render("templates/commands/default.jade", {
+                                        name:cmd.name, fields:cmd.fields
+                                    });
                                 });
                             }
-                        }()) 
+                        }())
                 });
             });
             if(fun.idField){
+                var detailViewUrl = baseUrl + "/:id";
                 ngRoutes.push({
-                    url: baseUrl + "/:id",
-                    templateUrl: baseUrl + "/:id", controller:'DetailController',
-                    requestHandler:(
+                    url: detailViewUrl,
+                    templateUrl: detailViewUrl, controller:'DetailController',
+                    registerRoute:(
                         function(){
                             var indexSegments = fun.index.split('/');
-                            return function(req, res) {
-                                var id = req.route.params.id;
-                                if(id && id != ':id'){
-                                    queryIndex(
-                                          indexSegments[2]
-                                        , indexSegments[4]
-                                        , encodeURIComponent(fun.idField + ":" + id)
-                                        , 0 , 1
-                                        , function(err,rez){
-                                            res.json(rez.Results[0]);
-                                        }
-                                    );
-                                    
-                                }else{
-                                    res.render("templates/listview/detail.jade", {fields: fun.fields});
-                                }
+                            return function(app){
+                                app.get(detailViewUrl,function(req, res) {
+                                    var id = req.route.params.id;
+                                    if(id && id != ':id'){
+                                        queryIndex(
+                                            indexSegments[2]
+                                            , indexSegments[4]
+                                            , encodeURIComponent(fun.idField + ":" + id)
+                                            , 0 , 1
+                                            , function(err,rez){
+                                                res.json(rez.Results[0]);
+                                            }
+                                        );
+
+                                    }else{
+                                        res.render("templates/listview/detail.jade", {fields: fun.fields});
+                                    }
+                                });
                             }
                         }())
                 });    
@@ -152,11 +163,13 @@ function getAppFunctions(queryIndex){
                 url:baseUrl,
                 templateUrl:getSpecificViewUrl(funId), 
                 controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'",
-                requestHandler:(
+                registerRoute:(
                     function(){
-                        return function(req, res) {
-                            res.render("templates/listview/index.jade");
-                        }
+                        return function(app){
+                            app.get(baseUrl,function(req, res) {
+                                res.render("templates/listview/index.jade");
+                            });
+                        };
                     }())
 
             });    
@@ -171,7 +184,9 @@ function start(app, queryIndex){
     //console.log(JSON.stringify(ngRoutes,null,4));
     ngRoutes.forEach(function(r){
         console.log(r);
-        app.get(r.url, r.requestHandler);
+        if(r.registerRoute){
+            r.registerRoute(app);
+        }
     });
     app.get('/app.js',function(req,res){
         var whens = ngRoutes
