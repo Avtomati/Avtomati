@@ -46,11 +46,13 @@ function ListViewController($scope,$rootScope,$http,$modal,$location){
         });
         modalInstance.result.then(function (model) {
             $http({
-                method:'POST',
-                url:templateUrl,
-                data:{model:model}
-            }).success(function(){
+                    method:'POST',
+                    url:templateUrl,
+                    data:{model:model}
+                }).success(function(){
                     alert('თქვენი ბრძანება შესრულებულია.');
+                }).error(function(){
+                    alert('მოხდა შეცდომა.კიდევ ერთხელ სცადეთ');
                 });
         });
     };

@@ -124,6 +124,17 @@ function getAppFunctions(queryIndex){
                                         name:cmd.name, fields:cmd.fields
                                     });
                                 });
+                                app.post(commandUrl,function(req,res){
+                                    //TODO: Validate, if error: 400
+                                    cmd.handler(req.body.model,function(err){
+                                       if(!err){
+                                           res.status(201)
+                                       } else{
+                                            res.status(409);
+                                       }
+                                       res.end();
+                                    });
+                                });
                             }
                         }())
                 });
