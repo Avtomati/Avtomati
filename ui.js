@@ -65,7 +65,10 @@ var db = [
         fields: {
             Ref: { lable:'Ref კოდი'},
             Eans: { lable: 'ეან კოდები'},
-            EanebisRaodenoba: { lable:'EanebisRaodenoba' },
+            Brendi: { lable: 'ბრენდი'},
+            Kvebrendi: { lable: 'ქვებრენდი'},
+            Dasakheleba: { lable: 'დასახელება'},
+            Fasi: { lable:'ფასი' },
             Partiebi: {
                     lable:'Partiebi',
                     fields : {

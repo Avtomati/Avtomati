@@ -69,21 +69,13 @@ app.post('/api/:databaseName/indexes/:indexName/facets/:facetName',function(req,
                                                 }));
     var withMlties = buildWhereClause(query);
     var requests = [
-        getFacetRequest(indexName,facetName,withMlties),
-        getFacetRequest(indexName,facetName,withoutMlties)
+        getFacetRequest(indexName,facetName,withMlties)
     ];
     multiGet(rhost,databaseName,requests,function(err,results){
         console.log(err,results);
         if(!err){
-            var r1 = enrichFacetFromMetadata(results[0].Result.Results)
-                .filter(function(f){
-                    return !f.isMulti;
-                });
-            var r2 = enrichFacetFromMetadata(results[1].Result.Results)
-                .filter(function(f){
-                    return f.isMulti;
-                });
-            var response = r2.concat(r1)
+            var r1 = enrichFacetFromMetadata(results[0].Result.Results);
+            var response = r1
                 .map(function(r){
                     r.values = r.values.filter(function(v){
                         return v.Hits > 0;
