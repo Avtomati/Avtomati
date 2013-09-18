@@ -9,21 +9,21 @@ var db = [
         idField: "Ref",
         menuId: "Produktebi",
         fields: {
-            Ref: { lable:'Ref კოდი'},
-            Eans: { lable: 'ეან კოდები'},
-            Brendi: { lable: 'ბრენდი'},
-            Kvebrendi: { lable: 'ქვებრენდი'},
-            Dasakheleba: { lable: 'დასახელება'},
-            Fasi: { lable:'ფასი' },
+            Ref: { label:'Ref კოდი'},
+            Eans: { label: 'ეან კოდები'},
+            Brendi: { label: 'ბრენდი'},
+            Kvebrendi: { label: 'ქვებრენდი'},
+            Dasakheleba: { label: 'დასახელება'},
+            Fasi: { label:'ფასი' },
             Partiebi: {
-                    lable:'Partiebi',
+                    label:'Partiebi',
                     fields : {
-                        MomcodeblisRefi: { lable:'MomcodeblisRefi' },
-                        Dasakheleba: { lable:'Dasakheleba' },
-                        Eans: { lable:'Eans' },
-                        Raodenoba: { lable:'Raodenoba' },
-                        ErtFasi: { lable:'ErtFasi' },
-                        Shenishvna: { lable:'Shenishvna' }
+                        MomcodeblisRefi: { label:'MomcodeblisRefi' },
+                        Dasakheleba: { label:'Dasakheleba' },
+                        Eans: { label:'Eans' },
+                        Raodenoba: { label:'Raodenoba' },
+                        ErtFasi: { label:'ErtFasi' },
+                        Shenishvna: { label:'Shenishvna' }
                     }
                 }
             
@@ -36,14 +36,14 @@ var db = [
         idField: "klientisId",
         menuId: "Client Management",
         fields: {
-            "pid": { lable:'პირადი ნომერი'},
-            "firstName": { lable:'სახელი'},
-            "lastName": { lable:'გვარი'},
-            "birthDate": { lable:'დაბ. დღე'},
-            "phone": { lable:'ტელეფონი'},
-            "address": { lable:'მისამართი'},
-            "email": { lable:'ელ. ფოსტა'},
-            "discount": { lable:'დისქოუნთ პროცენტი'}
+            "pid": { label:'პირადი ნომერი'},
+            "firstName": { label:'სახელი'},
+            "lastName": { label:'გვარი'},
+            "birthDate": { label:'დაბ. დღე'},
+            "phone": { label:'ტელეფონი'},
+            "address": { label:'მისამართი'},
+            "email": { label:'ელ. ფოსტა'},
+            "discount": { label:'დისქოუნთ პროცენტი'}
         },
         commands:[
             {
