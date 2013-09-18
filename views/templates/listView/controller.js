@@ -50,5 +50,9 @@ function ListViewController($scope,$rootScope,$http,$modal,$location){
     };
 }
 
-function DetailController($scope,$rootScope,$http,$modal){
+function DetailController($scope,$rootScope,$http,$modal,$routeParams,$location){
+    $http({method:'GET', url: $location.path()})
+        .success(function(data){
+            $scope.obj = data;
+        });
 }

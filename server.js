@@ -28,7 +28,13 @@ if (app.get('env') === 'production') {
 /*---Client Management----*/
 //app.get('/client')
 /*-------*/
-ui.start(app);
+ui.start(
+      app
+    , function(db, index, where, skip, take, cb){
+        queryIndex(rhost, db, index, where, skip, take, cb);
+    }
+);
+
 app.get('/', function index(req, res){
     res.render('index');
 });

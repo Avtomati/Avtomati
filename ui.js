@@ -23,6 +23,16 @@ var db = [
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
         idField: "klientisId",
         menuId: "Client Management",
+        fields: {
+            "pid": { lable:'პირადი ნომერი'},
+            "firstName": { lable:'სახელი'},
+            "lastName": { lable:'გვარი'},
+            "birthDate": { lable:'დაბ. დღე'},
+            "phone": { lable:'ტელეფონი'},
+            "address": { lable:'მისამართი'},
+            "email": { lable:'ელ. ფოსტა'},
+            "discount": { lable:'დისქოუნთ პროცენტი'},
+        },
         commands:[
             {
                 name:'DaamateAnketa',
@@ -65,7 +75,7 @@ var db = [
 ];
 
 //app.js generation functions
-function getAppFunctions(){
+function getAppFunctions(queryIndex){
     var ngRoutes = [];
     db.forEach(function(fun){
         var funId = toId(fun.menuId);
@@ -73,30 +83,69 @@ function getAppFunctions(){
         fun.commands = fun.commands || [];
         if(fun.index){
             ngRoutes.push({
-                url: baseUrl, nodeTemplatePath: "templates/listview/index.jade",
-                facet: fun.facet, index: fun.index,
-                commands: fun.commands, idField: fun.idField,
-                templateUrl: baseUrl, controller: 'ListViewController'
+                url: baseUrl, templateUrl: baseUrl, controller: 'ListViewController',
+                requestHandler:(
+                    function(){
+                        return function(req, res) {
+                            res.render("templates/listview/index.jade", {
+                                url: baseUrl, facet: fun.facet, index: fun.index,
+                                commands: fun.commands, idField: fun.idField
+                            });
+                        }
+                    }())
             });
             fun.commands.forEach(function(cmd){
                 ngRoutes.push({
-                    url: baseUrl+"/"+cmd.name, nodeTemplatePath: "templates/commands/default.jade",
-                    name:cmd.name,
-                    fields:cmd.fields 
+                    url: baseUrl + "/" + cmd.name, 
+                    requestHandler:(
+                        function(){
+                            return function(req, res) {
+                                res.render("templates/commands/default.jade", {
+                                   name:cmd.name, fields:cmd.fields
+                                });
+                            }
+                        }()) 
                 });
             });
             if(fun.idField){
                 ngRoutes.push({
-                    url: baseUrl + "/:id", nodeTemplatePath:"templates/listview/detail.jade",
-                    templateUrl: baseUrl + "/:id", controller:'DetailController'
+                    url: baseUrl + "/:id",
+                    templateUrl: baseUrl + "/:id", controller:'DetailController',
+                    requestHandler:(
+                        function(){
+                            var indexSegments = fun.index.split('/');
+                            return function(req, res) {
+                                var id = req.route.params.id;
+                                if(id && id != ':id'){
+                                    queryIndex(
+                                          indexSegments[2]
+                                        , indexSegments[4]
+                                        , encodeURIComponent(fun.idField + ":" + id)
+                                        , 0 , 1
+                                        , function(err,rez){
+                                            res.json(rez.Results[0]);
+                                        }
+                                    );
+                                    
+                                }else{
+                                    res.render("templates/listview/detail.jade", {fields: fun.fields});
+                                }
+                            }
+                        }())
                 });    
             }
         }else{
           ngRoutes.push({
-                url:baseUrl, nodeTemplatePath:"templates/listview/index.jade",
-                facet:fun.facet, index:fun.index,
-                commands:fun.commands, idField:fun.idField,
-                templateUrl:getSpecificViewUrl(funId), controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'"
+                url:baseUrl,
+                templateUrl:getSpecificViewUrl(funId), 
+                controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'",
+                requestHandler:(
+                    function(){
+                        return function(req, res) {
+                            res.render("templates/listview/index.jade");
+                        }
+                    }())
+
             });    
         }
     });
@@ -104,14 +153,12 @@ function getAppFunctions(){
 };
 
 
-function start(app){
-    var ngRoutes = getAppFunctions();
+function start(app, queryIndex){
+    var ngRoutes = getAppFunctions(queryIndex);
     //console.log(JSON.stringify(ngRoutes,null,4));
     ngRoutes.forEach(function(r){
         console.log(r);
-        app.get(r.url, function(req,res) {
-            res.render(r.nodeTemplatePath, r);
-        });
+        app.get(r.url, r.requestHandler);
     });
     app.get('/app.js',function(req,res){
         var whens = ngRoutes
