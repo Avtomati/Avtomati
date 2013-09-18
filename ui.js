@@ -1,6 +1,12 @@
 var path = require('path'),
     _ = require('underscore'),
-    domain = require('./domain')(),
+    raven = require('./raven')(),
+    domain = require('./domain')(
+        {
+            store:function(id,doc,meta,cb) {
+                raven.store('http://office.anvol.ge:8080/','Anketebi', id, doc, meta, cb);
+            }
+        }),
     fs = require('fs');
     
 var db = [
@@ -49,27 +55,20 @@ var db = [
         commands:[
             {
                 name:'DaamateAnketa',
-                fields:[
-                    {name:'pid',label:'პირადი ნომერი'},
-                    {name:'firstName',label:'სახელი'},
-                    {name:'lastName',label:'გვარი'},
-                    {name:'birthDate',label:'დაბ. თარიღი',type:'date'},
-                    {name:'vip',label:'VIP',type:'check'},
-                    {name:'phone',label:'ტელეფონი'},
-                    {name:'mail',label:'e-Mail'},
-                    {name:'childrenBirthDates',label:'ბავშვების დაბ. თარიღები'},
-                    {name:'cardNumber',label:'ბარათის ნომერი'},
-                    {name:'discount',label:'დისქოუნთ პროცენტი'}
-                ],
+                fields:{
+                    'pid':{label:'პირადი ნომერი'},
+                    'firstName':{label:'სახელი'},
+                    'lastName':{label:'გვარი'},
+                    'birthDate':{label:'დაბ. თარიღი',type:'date'},
+                    'vip':{label:'VIP',type:'check'},
+                    'phone':{label:'ტელეფონი'},
+                    'mail':{label:'e-Mail'},
+                    'childrenBirthDates':{label:'ბავშვების დაბ. თარიღები'},
+                    'cardNumber':{label:'ბარათის ნომერი'},
+                    'discount':{label:'დისქოუნთ პროცენტი'}
+                },
                 handler:domain.daamateAnketa
             }
-        ],
-        idCommands: [
-            { name:"AddCardNumber" },
-            { name:"AddChildBirthDate" }
-        ],
-        setCommands:[
-            { name:"Set Discount Percent" }
         ]
     }, {
         index: "/api/Anvol/indexes/DocumentsByTags",
@@ -126,7 +125,9 @@ function getAppFunctions(queryIndex){
                                 });
                                 app.post(commandUrl,function(req,res){
                                     //TODO: Validate, if error: 400
-                                    cmd.handler(req.body.model,function(err){
+                                    var model = req.body.model;
+                                    //validate();
+                                    cmd.handler(model,function(err){
                                        if(!err){
                                            res.status(201)
                                        } else{
@@ -189,7 +190,24 @@ function getAppFunctions(queryIndex){
     return ngRoutes;
 };
 
-
+function tryParseToDate(str){
+    var segments = str.split(/\.|\-|\//gi);
+    if(segments.length!=3){
+        return false;
+    }
+    var day = parseInt(segments[0]);
+    var month = parseInt(segments[1]);
+    var year = parseInt(segments[2]);
+    if(!day || !month || !year){
+        return false;
+    }
+    var strDate = year.toString()+'-'+month.toString()+'-'+day.toString();
+    var parsed = Date.parse(strDate);
+    if(!parsed){
+        return false;
+    }
+    return new Date(parsed);
+};
 function start(app, queryIndex){
     var ngRoutes = getAppFunctions(queryIndex);
     //console.log(JSON.stringify(ngRoutes,null,4));

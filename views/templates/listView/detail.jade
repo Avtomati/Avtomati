@@ -14,7 +14,7 @@
                 if field.fields
                   mixin renderList(field.fields, path + "." + key)
                 else
-                  {{row.#{key}}}
+                  | {{row.#{key}}}
 
   mixin renderObj(fields, path)
     table.table.table-bordered.table-striped.table-hover.table-condensed
@@ -26,6 +26,6 @@
               if field.fields
                 mixin renderList(field.fields, path + "." + key)
               else
-                {{#{path}.#{key}}}
+                | {{#{path}.#{key}}}
   if fields
     mixin renderObj(fields, 'obj')

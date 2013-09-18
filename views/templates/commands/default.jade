@@ -1,24 +1,30 @@
+mixin mCheck(key,field)
+  div.control-group
+    div.controls
+      label.checkbox=field.label
+        input(type="checkbox",ng-model="#{'model.'+key}")
+mixin mDate(key,field)
+  div.control-group
+    label.control-label(for=key)=field.label
+    div.controls
+      input(type="text",id=key,datepicker-popup="dd-MM-yyyy",ng-model="#{'model.'+key}")
+mixin mText(key,field)
+  div.control-group
+    label.control-label(for=key)=field.label
+    div.controls
+      input(type="text",id=key,ng-model="#{'model.'+key}")
 .container-fluid
   .row-fluid
       h3.page-header=name
       form.form-horizontal
-        each field in fields
+        each field, key in fields
           case field.type
             when 'check'
-              div.control-group
-                div.controls
-                  label.checkbox=field.label
-                    input(type="checkbox",ng-model="#{'model.'+field.name}")
+              mixin mCheck(key,field)
             when 'date'
-              div.control-group
-                label.control-label(for=field.name)=field.label
-                div.controls
-                  input(type="text",id=field.name,datepicker-popup="dd-MM-yyyy",ng-model="#{'model.'+field.name}")
+              mixin mDate(key,field)
             default
-              div.control-group
-                label.control-label(for=field.name)=field.label
-                div.controls
-                  input(type="text",id=field.name,ng-model="#{'model.'+field.name}")
+              mixin mText(key,field)
         div.control-group
           div.controls
             button.btn.btn-primary(ng-click="execute()") შესრულება
