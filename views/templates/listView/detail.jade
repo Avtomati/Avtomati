@@ -15,16 +15,12 @@
                 mixin renderSchema(tdef, "row['" + key + "']")
   
   mixin renderValueArray(typeDef, path)
-    - console.log("renderValueArray")
-    - console.log(typeDef, path)
     span(ng-repeat="row in #{path}")
       mixin renderSchema(typeDef, "row")
       ,
 
   
   mixin renderArray(typeDef, path)
-    - console.log("renderArray")
-    - console.log(typeDef, path)
     case typeDef.type
       when 'object'
         mixin renderObjectArray(typeDef, path)
@@ -64,5 +60,4 @@
         default
           {{#{path}}}
   if schema
-    - console.log("rendering....")
     mixin renderSchema(schema, 'obj')

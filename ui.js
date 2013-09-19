@@ -15,43 +15,12 @@ var db = [
         facet: "/api/Anvol/indexes/refebi/facets/refs",
         idField: "Ref",
         menuId: "Produktebi",
-        fields: {
-            Ref: { label:'Ref კოდი'},
-            Eans: { label: 'ეან კოდები'},
-            Brendi: { label: 'ბრენდი'},
-            Kvebrendi: { label: 'ქვებრენდი'},
-            Dasakheleba: { label: 'დასახელება'},
-            Fasi: { label:'ფასი' },
-            Partiebi: {
-                    label:'Partiebi',
-                    fields : {
-                        MomcodeblisRefi: { label:'MomcodeblisRefi' },
-                        Dasakheleba: { label:'Dasakheleba' },
-                        Eans: { label:'Eans' },
-                        Raodenoba: { label:'Raodenoba' },
-                        ErtFasi: { label:'ErtFasi' },
-                        Shenishvna: { label:'Shenishvna' }
-                    }
-                }
-            
-        }
-
     }, {
         database:'Anketebi',
         index: "/api/Anketebi/indexes/Klientebi",
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
         idField: "klientisId",
         menuId: "Client Management",
-        fields: {
-            "pid": { label:'პირადი ნომერი'},
-            "firstName": { label:'სახელი'},
-            "lastName": { label:'გვარი'},
-            "birthDate": { label:'დაბ. დღე'},
-            "phone": { label:'ტელეფონი'},
-            "address": { label:'მისამართი'},
-            "email": { label:'ელ. ფოსტა'},
-            "discount": { label:'დისქოუნთ პროცენტი'}
-        },
         commands:[
             {
                 name:'DaamateAnketa',
@@ -73,12 +42,13 @@ var db = [
     }, {
         index: "/api/Anvol/indexes/DocumentsByTags",
         facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
-        idField: "Id",
+        idField: "@id",
         menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
         commands:[]
     }, {
         index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
         facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        idField: "@id",
         menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
         commands:[]
     }, {
@@ -91,7 +61,7 @@ var db = [
 ];
 
 //app.js generation functions
-function getAppFunctions(queryIndex){
+function getAppFunctions(queryIndex, multiGet){
     var ngRoutes = [];
     db.forEach(function(fun){
         var funId = toId(fun.menuId);
@@ -153,30 +123,44 @@ function getAppFunctions(queryIndex){
                             return function(app){
                                 app.get(detailViewUrl, function(req, res) {
                                     var id = req.route.params.id;
-                                    queryIndex(
-                                          indexSegments[2]
-                                        , indexSegments[4]
-                                        , encodeURIComponent(fun.idField + ":" + id)
-                                        , 0 , 1
-                                        , function(err,rez){
-                                            res.json(rez.Results[0]);
-                                        }
-                                    );
+                                    var cb = function(err,rez){
+                                                res.json(rez);
+                                            };
+
+                                    if(fun.idField === "@id"){
+                                        multiGet(
+                                              indexSegments[2]
+                                            , [{path: "/docs/" + id, headers:{}}]
+                                            , function(err,rez){cb(err, rez[0].Result )});
+                                    }else{
+                                        queryIndex(
+                                              indexSegments[2]
+                                            , indexSegments[4]
+                                            , encodeURIComponent(fun.idField + ":" + id)
+                                            , 0 , 1
+                                            , function(err,rez){cb(err,rez.Results[0])});
+                                    }
                                 });
                                 app.get("/templates" + detailViewUrl, function(req, res) {
                                     var id = req.route.params.id;
-                                            console.log(id);
-                                    queryIndex(
-                                          indexSegments[2]
-                                        , indexSegments[4]
-                                        , encodeURIComponent(fun.idField + ":" + id)
-                                        , 0 , 1
-                                        , function(err,rez){
-                                            var schema = getSchema(rez.Results[0]);
-                                            console.log(schema);
-                                            res.render("templates/listview/detail.jade", {schema: schema});
-                                        }
-                                    );
+                                    var cb = function(err,rez){
+                                                var schema = getSchema(rez);
+                                                res.render("templates/listview/detail.jade", {schema: schema});
+                                            };
+
+                                    if(fun.idField === "@id"){
+                                        multiGet(
+                                              indexSegments[2]
+                                            , [{path: "/docs/" + id, headers:{}}]
+                                            , function(err,rez){cb(err, rez[0].Result )});
+                                    }else{
+                                        queryIndex(
+                                              indexSegments[2]
+                                            , indexSegments[4]
+                                            , encodeURIComponent(fun.idField + ":" + id)
+                                            , 0 , 1
+                                            , function(err,rez){cb(err,rez.Results[0])});
+                                    }
                                 });
                             }
                         }())
@@ -220,11 +204,9 @@ function tryParseToDate(str){
     }
     return new Date(parsed);
 };
-function start(app, queryIndex){
-    var ngRoutes = getAppFunctions(queryIndex);
-    //console.log(JSON.stringify(ngRoutes,null,4));
+function start(app, queryIndex, multiGet){
+    var ngRoutes = getAppFunctions(queryIndex, multiGet);
     ngRoutes.forEach(function(r){
-        console.log(r);
         if(r.registerRoute){
             r.registerRoute(app);
         }

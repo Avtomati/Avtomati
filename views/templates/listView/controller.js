@@ -30,9 +30,9 @@ function ListViewController($scope,$rootScope,$http,$modal,$location){
             });
     };
     $scope.showDetailView = function(url, row){
-        console.log($location.path());
-        $location.path(url + "/" + encodeURIComponent(row[$scope.idField]));
-        console.log($location.path());
+        var id = $scope.idField === "@id" ? row["@metadata"]["@id"] : row[$scope.idField];
+        console.log(id);
+        $location.path(url + "/" + encodeURIComponent(id));
     }
     $scope.showCommand = function(templateUrl){
         var modalInstance = $modal.open({
