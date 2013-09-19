@@ -34,7 +34,8 @@
       tbody
         each typeDef, key in schema
           tr
-            td=key
+            td 
+              b=key
             td 
               mixin renderSchema(typeDef, path + "['" + key + "']")
 
