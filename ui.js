@@ -73,6 +73,7 @@ var db = [
     }, {
         index: "/api/Anvol/indexes/DocumentsByTags",
         facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
+        idField: "Id",
         menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
         commands:[]
     }, {
@@ -98,7 +99,7 @@ function getAppFunctions(queryIndex){
         fun.commands = fun.commands || [];
         if(fun.index){
             ngRoutes.push({
-                url: baseUrl, templateUrl: baseUrl, controller: 'ListViewController',
+                url: baseUrl, templateUrl: "'" + baseUrl + "'", controller: 'ListViewController',
                 registerRoute:(
                     function(){
                         return function(app) {
@@ -140,31 +141,42 @@ function getAppFunctions(queryIndex){
                         }())
                 });
             });
+
             if(fun.idField){
                 var detailViewUrl = baseUrl + "/:id";
                 ngRoutes.push({
                     url: detailViewUrl,
-                    templateUrl: detailViewUrl, controller:'DetailController',
+                    templateUrl: "function(route,path){ return '" + "templates" + baseUrl + "' + '/' + route.id; }", controller:'DetailController',
                     registerRoute:(
                         function(){
                             var indexSegments = fun.index.split('/');
                             return function(app){
-                                app.get(detailViewUrl,function(req, res) {
+                                app.get(detailViewUrl, function(req, res) {
                                     var id = req.route.params.id;
-                                    if(id && id != ':id'){
-                                        queryIndex(
-                                            indexSegments[2]
-                                            , indexSegments[4]
-                                            , encodeURIComponent(fun.idField + ":" + id)
-                                            , 0 , 1
-                                            , function(err,rez){
-                                                res.json(rez.Results[0]);
-                                            }
-                                        );
-
-                                    }else{
-                                        res.render("templates/listview/detail.jade", {fields: fun.fields});
-                                    }
+                                    queryIndex(
+                                          indexSegments[2]
+                                        , indexSegments[4]
+                                        , encodeURIComponent(fun.idField + ":" + id)
+                                        , 0 , 1
+                                        , function(err,rez){
+                                            res.json(rez.Results[0]);
+                                        }
+                                    );
+                                });
+                                app.get("/templates" + detailViewUrl, function(req, res) {
+                                    var id = req.route.params.id;
+                                            console.log(id);
+                                    queryIndex(
+                                          indexSegments[2]
+                                        , indexSegments[4]
+                                        , encodeURIComponent(fun.idField + ":" + id)
+                                        , 0 , 1
+                                        , function(err,rez){
+                                            var schema = getSchema(rez.Results[0]);
+                                            console.log(schema);
+                                            res.render("templates/listview/detail.jade", {schema: schema});
+                                        }
+                                    );
                                 });
                             }
                         }())
@@ -173,7 +185,7 @@ function getAppFunctions(queryIndex){
         }else{
           ngRoutes.push({
                 url:baseUrl,
-                templateUrl:getSpecificViewUrl(funId), 
+                templateUrl:"'"+getSpecificViewUrl(funId)+"'", 
                 controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'",
                 registerRoute:(
                     function(){
@@ -220,11 +232,14 @@ function start(app, queryIndex){
     app.get('/app.js',function(req,res){
         var whens = ngRoutes
                         .map(function(r){
-            return  "when('"+ r.url + "',{templateUrl:'"+
-                r.templateUrl + "',controller:"+
-                r.controller + "})";
+            return  "when("+
+                "'" + r.url + "'," +
+                "{"+
+                    "templateUrl: " + r.templateUrl + ", " +
+                    "controller:" + r.controller + 
+                "})";
         }).join('.');
-        var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
+        var appjs = "angular.module('app', ['ui.bootstrap'], function($routeProvider){"+
             "$routeProvider."+
             whens +
             ".otherwise({"+
@@ -312,3 +327,35 @@ function toControllerName(s){
 function toId(s){
     return s.replace(/ /gi,'');
 };
+
+
+function getSchema(o){
+    var type = typeof o;
+    if(type === "object" && !o) return {type: 'null'};
+    if(type === "object" && o.constructor.name !== "Date"){
+        if(o.constructor.name === "Array"){
+            var rez = []
+            for(var key in o){
+                if(!o[key]) {
+                    continue;
+                }
+                var json = JSON.stringify(getSchema(o[key]));
+                if(rez.indexOf(json) === -1){
+                    rez.push(json);
+                }
+            }
+
+            for(var i in rez.sort(function(l,r){ return r.length - l.length; })){
+                rez[i] = JSON.parse(rez[i])
+                break;
+            }
+            return {type:'array', schema: rez[0]};    
+        }
+        var rez = {}
+        for(var key in o){
+            rez[key] = getSchema(o[key]);
+        }
+        return {type:'object', schema:  rez};
+    }
+    return {type: type === 'object' ? o.constructor.name.toLowerCase() : type};
+}
