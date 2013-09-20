@@ -221,12 +221,13 @@ function start(app, queryIndex, multiGet){
                     "controller:" + r.controller + 
                 "})";
         }).join('.');
-        var appjs = "angular.module('app', ['ui.bootstrap'], function($routeProvider){"+
+        var appjs = "angular.module('app', ['ui.bootstrap','LocalStorageModule'], function($routeProvider,$locationProvider){"+
             "$routeProvider."+
             whens +
             ".otherwise({"+
             "redirectTo: '/'"+
-                "})"+
+                "});"+
+            //"$locationProvider.html5Mode(false).hashPrefix('#');" +
             "});";
         res.setHeader('Content-Type','application/javascript');
         res.send(appjs);

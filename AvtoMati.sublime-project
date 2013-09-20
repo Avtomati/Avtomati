@@ -1,8 +1,14 @@
 {
-	"folders":
-	[
-		{
-			"path": "/D/Dev/Avtomati"
-		}
-	]
+ "folders": [
+  {
+   "folder_exclude_patterns": [
+    "node_modules", 
+    "public/lib"
+   ], 
+   "path": "/D/Dev/Avtomati", 
+   "file_exclude_patterns": [
+    "AvtoMati.sublime-workspace"
+   ]
+  }
+ ]
 }

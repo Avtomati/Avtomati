@@ -14,10 +14,6 @@ function queryIndex(host,db,index,where,skip,take,cb){
     });
 };
 
-// queryIndex("http://office.anvol.ge:8080/", "Anvol", "Refebi", "Ref:8318043", 0, 1, function(e, x){
-//     console.log(JSON.stringify(getSchema(x.Results[0]), null, 2));
-// });
-
 var test = { 
     a:1,
     object: { c:2, d:"3", e:new Date()},
