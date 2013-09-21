@@ -31,7 +31,7 @@ function mergeLeft(l, r, getkey, actEq, del){
 
 angular
     .module('app')
-    .directive('aiFacet',function(){
+    .directive('aiFacet',function(localStorageService, $location){
     return {
         restrict:'E',
         templateUrl:'templates/aiFacet',
@@ -40,6 +40,12 @@ angular
             $scope.selectedFacets = [];
             $scope.facets = [];
             $scope.updateFacetData = function(){
+                var newq = $scope.selectedFacets.map(function(x){return {key:x.key,values:x.values}});
+                newq = JSON.stringify(newq);
+                if(newq == $scope.oldq){
+                    return;
+                }
+                $scope.oldq = newq;
                 $http({
                     method:'POST',
                     url:$scope.aiUrl,
@@ -61,6 +67,7 @@ angular
                             }
                             ,true
                         );
+                        localStorageService.set('facet' + $location.path(), $scope.selectedFacets);
                         $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);
                     });
             };
@@ -101,7 +108,10 @@ angular
         link: function(scope, iElement, iAttrs){
             scope.aiUrl = iAttrs.aiUrl;
             scope.indexName = iAttrs.aiUrl.split('/')[4];
-            scope.oldData = {};
+            var data = localStorageService.get('facet' + $location.path());
+            if(data){
+                scope.selectedFacets = data
+            }
             scope.updateFacetData();
         }
     };

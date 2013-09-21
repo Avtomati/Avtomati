@@ -33,6 +33,9 @@ ui.start(
     , function(db, index, where, skip, take, cb){
         queryIndex(rhost, db, index, where, skip, take, cb);
     }
+    , function(db, requests, cb){
+        multiGet(rhost, db, requests, cb);
+    }
 );
 
 app.get('/', function index(req, res){
@@ -72,7 +75,6 @@ app.post('/api/:databaseName/indexes/:indexName/facets/:facetName',function(req,
         getFacetRequest(indexName,facetName,withMlties)
     ];
     multiGet(rhost,databaseName,requests,function(err,results){
-        console.log(err,results);
         if(!err){
             var r1 = enrichFacetFromMetadata(results[0].Result.Results);
             var response = r1
@@ -151,7 +153,6 @@ function multiGet(host,db,requests,cb){
     });
     body = JSON.stringify(body);
     var url = host + 'databases/' + db + '/multi_get';
-    console.log(url,body);
     request.post({
         url: url,
         body: body
@@ -161,7 +162,6 @@ function multiGet(host,db,requests,cb){
             var result = JSON.parse(resBody);
             cb(null,result)
         } else {
-            console.log(resBody)
             cb(error || response.statusCode, null);
         }
     });

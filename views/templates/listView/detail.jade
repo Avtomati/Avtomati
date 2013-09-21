@@ -1,31 +1,64 @@
 .container
   h1.page-header {{title}}
-  mixin renderList(fields, path)
+  
+  mixin renderObjectArray(typeDef, path)
     table.table.table-bordered.table-striped.table-hover.table-condensed
       tbody
         thead
           tr
-            each field, key in fields
-              th=field.label
+            each tdef, key in typeDef.schema
+              th=key
         tbody
           tr(ng-repeat="row in #{path}")
-            each field, key in fields
+            each tdef, key in typeDef.schema
               td
-                if field.fields
-                  mixin renderList(field.fields, path + "." + key)
-                else
-                  | {{row.#{key}}}
+                mixin renderSchema(tdef, "row['" + key + "']")
+  
+  mixin renderValueArray(typeDef, path)
+    span(ng-repeat="row in #{path}")
+      mixin renderSchema(typeDef, "row")
+      ,
 
-  mixin renderObj(fields, path)
+  
+  mixin renderArray(typeDef, path)
+    case typeDef.type
+      when 'object'
+        mixin renderObjectArray(typeDef, path)
+      default
+        mixin renderValueArray(typeDef, path)
+
+                
+
+  mixin renderObject(schema, path)
     table.table.table-bordered.table-striped.table-hover.table-condensed
       tbody
-        each field, key in fields
-          tr()
-            td()= field.label
-            td
-              if field.fields
-                mixin renderList(field.fields, path + "." + key)
-              else
-                | {{#{path}.#{key}}}
-  if fields
-    mixin renderObj(fields, 'obj')
+        each typeDef, key in schema
+          tr
+            td 
+              b=key
+            td 
+              mixin renderSchema(typeDef, path + "['" + key + "']")
+
+
+  mixin renderSchema(typeDef, path)
+    if typeDef
+      case typeDef.type
+        when 'object'
+          mixin renderObject(typeDef.schema, path)
+        when 'array'
+          if typeDef.schema
+            mixin renderArray(typeDef.schema, path)
+        //- when 'date'
+        //-   p {{#{path}}}
+        //- when 'number'
+        //-   p number
+        //- when 'string'
+        //-   {{#{path}}}
+        //- when 'boolean'
+        //-   input(type="checkbox", ng-model="#{path}")
+        //- when 'null'
+        //-   p null
+        default
+          {{#{path}}}
+  if schema
+    mixin renderSchema(schema, 'obj')

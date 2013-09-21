@@ -15,43 +15,12 @@ var db = [
         facet: "/api/Anvol/indexes/refebi/facets/refs",
         idField: "Ref",
         menuId: "Produktebi",
-        fields: {
-            Ref: { label:'Ref კოდი'},
-            Eans: { label: 'ეან კოდები'},
-            Brendi: { label: 'ბრენდი'},
-            Kvebrendi: { label: 'ქვებრენდი'},
-            Dasakheleba: { label: 'დასახელება'},
-            Fasi: { label:'ფასი' },
-            Partiebi: {
-                    label:'Partiebi',
-                    fields : {
-                        MomcodeblisRefi: { label:'MomcodeblisRefi' },
-                        Dasakheleba: { label:'Dasakheleba' },
-                        Eans: { label:'Eans' },
-                        Raodenoba: { label:'Raodenoba' },
-                        ErtFasi: { label:'ErtFasi' },
-                        Shenishvna: { label:'Shenishvna' }
-                    }
-                }
-            
-        }
-
     }, {
         database:'Anketebi',
         index: "/api/Anketebi/indexes/Klientebi",
         facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
         idField: "klientisId",
         menuId: "Client Management",
-        fields: {
-            "pid": { label:'პირადი ნომერი'},
-            "firstName": { label:'სახელი'},
-            "lastName": { label:'გვარი'},
-            "birthDate": { label:'დაბ. დღე'},
-            "phone": { label:'ტელეფონი'},
-            "address": { label:'მისამართი'},
-            "email": { label:'ელ. ფოსტა'},
-            "discount": { label:'დისქოუნთ პროცენტი'}
-        },
         commands:[
             {
                 name:'DaamateAnketa',
@@ -73,11 +42,13 @@ var db = [
     }, {
         index: "/api/Anvol/indexes/DocumentsByTags",
         facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
+        idField: "@id",
         menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
         commands:[]
     }, {
         index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
         facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        idField: "@id",
         menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
         commands:[]
     }, {
@@ -90,7 +61,7 @@ var db = [
 ];
 
 //app.js generation functions
-function getAppFunctions(queryIndex){
+function getAppFunctions(queryIndex, multiGet){
     var ngRoutes = [];
     db.forEach(function(fun){
         var funId = toId(fun.menuId);
@@ -98,7 +69,7 @@ function getAppFunctions(queryIndex){
         fun.commands = fun.commands || [];
         if(fun.index){
             ngRoutes.push({
-                url: baseUrl, templateUrl: baseUrl, controller: 'ListViewController',
+                url: baseUrl, templateUrl: "'" + baseUrl + "'", controller: 'ListViewController',
                 registerRoute:(
                     function(){
                         return function(app) {
@@ -140,30 +111,55 @@ function getAppFunctions(queryIndex){
                         }())
                 });
             });
+
             if(fun.idField){
                 var detailViewUrl = baseUrl + "/:id";
                 ngRoutes.push({
                     url: detailViewUrl,
-                    templateUrl: detailViewUrl, controller:'DetailController',
+                    templateUrl: "function(route,path){ return '" + "templates" + baseUrl + "' + '/' + route.id; }", controller:'DetailController',
                     registerRoute:(
                         function(){
                             var indexSegments = fun.index.split('/');
                             return function(app){
-                                app.get(detailViewUrl,function(req, res) {
+                                app.get(detailViewUrl, function(req, res) {
                                     var id = req.route.params.id;
-                                    if(id && id != ':id'){
+                                    var cb = function(err,rez){
+                                                res.json(rez);
+                                            };
+
+                                    if(fun.idField === "@id"){
+                                        multiGet(
+                                              indexSegments[2]
+                                            , [{path: "/docs/" + id, headers:{}}]
+                                            , function(err,rez){cb(err, rez[0].Result )});
+                                    }else{
                                         queryIndex(
-                                            indexSegments[2]
+                                              indexSegments[2]
                                             , indexSegments[4]
                                             , encodeURIComponent(fun.idField + ":" + id)
                                             , 0 , 1
-                                            , function(err,rez){
-                                                res.json(rez.Results[0]);
-                                            }
-                                        );
+                                            , function(err,rez){cb(err,rez.Results[0])});
+                                    }
+                                });
+                                app.get("/templates" + detailViewUrl, function(req, res) {
+                                    var id = req.route.params.id;
+                                    var cb = function(err,rez){
+                                                var schema = getSchema(rez);
+                                                res.render("templates/listview/detail.jade", {schema: schema});
+                                            };
 
+                                    if(fun.idField === "@id"){
+                                        multiGet(
+                                              indexSegments[2]
+                                            , [{path: "/docs/" + id, headers:{}}]
+                                            , function(err,rez){cb(err, rez[0].Result )});
                                     }else{
-                                        res.render("templates/listview/detail.jade", {fields: fun.fields});
+                                        queryIndex(
+                                              indexSegments[2]
+                                            , indexSegments[4]
+                                            , encodeURIComponent(fun.idField + ":" + id)
+                                            , 0 , 1
+                                            , function(err,rez){cb(err,rez.Results[0])});
                                     }
                                 });
                             }
@@ -173,7 +169,7 @@ function getAppFunctions(queryIndex){
         }else{
           ngRoutes.push({
                 url:baseUrl,
-                templateUrl:getSpecificViewUrl(funId), 
+                templateUrl:"'"+getSpecificViewUrl(funId)+"'", 
                 controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'",
                 registerRoute:(
                     function(){
@@ -208,11 +204,9 @@ function tryParseToDate(str){
     }
     return new Date(parsed);
 };
-function start(app, queryIndex){
-    var ngRoutes = getAppFunctions(queryIndex);
-    //console.log(JSON.stringify(ngRoutes,null,4));
+function start(app, queryIndex, multiGet){
+    var ngRoutes = getAppFunctions(queryIndex, multiGet);
     ngRoutes.forEach(function(r){
-        console.log(r);
         if(r.registerRoute){
             r.registerRoute(app);
         }
@@ -220,16 +214,20 @@ function start(app, queryIndex){
     app.get('/app.js',function(req,res){
         var whens = ngRoutes
                         .map(function(r){
-            return  "when('"+ r.url + "',{templateUrl:'"+
-                r.templateUrl + "',controller:"+
-                r.controller + "})";
+            return  "when("+
+                "'" + r.url + "'," +
+                "{"+
+                    "templateUrl: " + r.templateUrl + ", " +
+                    "controller:" + r.controller + 
+                "})";
         }).join('.');
-        var appjs = "angular.module('app',['ui.bootstrap'], function($routeProvider){"+
+        var appjs = "angular.module('app', ['ui.bootstrap','LocalStorageModule'], function($routeProvider,$locationProvider){"+
             "$routeProvider."+
             whens +
             ".otherwise({"+
             "redirectTo: '/'"+
-                "})"+
+                "});"+
+            //"$locationProvider.html5Mode(false).hashPrefix('#');" +
             "});";
         res.setHeader('Content-Type','application/javascript');
         res.send(appjs);
@@ -312,3 +310,35 @@ function toControllerName(s){
 function toId(s){
     return s.replace(/ /gi,'');
 };
+
+
+function getSchema(o){
+    var type = typeof o;
+    if(type === "object" && !o) return {type: 'null'};
+    if(type === "object" && o.constructor.name !== "Date"){
+        if(o.constructor.name === "Array"){
+            var rez = []
+            for(var key in o){
+                if(!o[key]) {
+                    continue;
+                }
+                var json = JSON.stringify(getSchema(o[key]));
+                if(rez.indexOf(json) === -1){
+                    rez.push(json);
+                }
+            }
+
+            for(var i in rez.sort(function(l,r){ return r.length - l.length; })){
+                rez[i] = JSON.parse(rez[i])
+                break;
+            }
+            return {type:'array', schema: rez[0]};    
+        }
+        var rez = {}
+        for(var key in o){
+            rez[key] = getSchema(o[key]);
+        }
+        return {type:'object', schema:  rez};
+    }
+    return {type: type === 'object' ? o.constructor.name.toLowerCase() : type};
+}
