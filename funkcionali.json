@@ -1,0 +1,91 @@
+[
+    {
+        "index": "/api/Anvol/indexes/refebi",
+        "facet": "/api/Anvol/indexes/refebi/facets/refs",
+        "idField": "Ref",
+        "menuId": "Produktebi",
+         "commands": [
+                {
+                "name": "Brdzaneba2",
+                "fields": {
+                    "pid2": {"label": "პირადი ნომერი2"}
+                    }
+                },
+                {
+                "name": "Brdzaneba3",
+                "fields": {
+                    "pid3": {"label": "პირადი ნომერი3"}
+                    }
+                }
+        ]
+    },
+    {
+        "database": "Anketebi",
+        "index": "/api/Anketebi/indexes/Klientebi",
+        "facet": "/api/Anketebi/indexes/Klientebi/facets/klientebi",
+        "idField": "klientisId",
+        "menuId": "Client Management",
+        "commands": [
+            {
+                "name": "DaamateAnketa",
+                "fields": {
+                    "pid": {
+                        "label": "პირადი ნომერი"
+                    },
+                    "firstName": {
+                        "label": "სახელი"
+                    },
+                    "lastName": {
+                        "label": "გვარი"
+                    },
+                    "birthDate": {
+                        "label": "დაბ. თარიღი",
+                        "type": "date"
+                    },
+                    "vip": {
+                        "label": "VIP",
+                        "type": "check"
+                    },
+                    "phone": {
+                        "label": "ტელეფონი"
+                    },
+                    "mail": {
+                        "label": "e-Mail"
+                    },
+                    "childrenBirthDates": {
+                        "label": "ბავშვების დაბ. თარიღები"
+                    },
+                    "cardNumber": {
+                        "label": "ბარათის ნომერი"
+                    },
+                    "discount": {
+                        "label": "დისქოუნთ პროცენტი"
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "index": "/api/Anvol/indexes/DocumentsByTags",
+        "facet": "/api/Anvol/indexes/DocumentsByTags/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Anvol/Dokumentebi",
+        "commands": []
+    },
+    {
+        "index": "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
+        "facet": "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Anketebi/Dokumentebi",
+        "commands": []
+    },
+    {
+        "menuId": "Home"
+    },
+    {
+        "menuId": "Ai Directives"
+    },
+    {
+        "menuId": "examples/ylinji/minji"
+    }
+]

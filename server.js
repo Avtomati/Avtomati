@@ -28,13 +28,27 @@ if (app.get('env') === 'production') {
 /*---Client Management----*/
 //app.get('/client')
 /*-------*/
-ui.start(
-      app
+ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
+    ,  app
     , function(db, index, where, skip, take, cb){
         queryIndex(rhost, db, index, where, skip, take, cb);
     }
     , function(db, requests, cb){
         multiGet(rhost, db, requests, cb);
+    },
+    {
+        DaamateAnketa:function(cmd, cb){
+            console.log(cmd);
+            cb();
+        },
+        Brdzaneba2:function(cmd, cb){
+            console.log(cmd);
+            cb();
+        },
+        Brdzaneba3:function(cmd, cb){
+            console.log(cmd);
+            cb();
+        }
     }
 );
 
