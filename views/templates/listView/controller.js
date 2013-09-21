@@ -1,5 +1,4 @@
 function ListViewController($scope, $rootScope, $http, $modal, $location) {
-    $scope.q = [];
     $scope.currentPage = 1;
     $scope.$watch('indexUrl', function(v) {
         var indexName = v.split('/')[4];
@@ -11,13 +10,23 @@ function ListViewController($scope, $rootScope, $http, $modal, $location) {
             } else {
                 $scope.currentPage = 1;
             }
+            console.log(args);
         });
-
     });
     $scope.$watch('currentPage', function() {
         $scope.updateGridData();
     });
     $scope.updateGridData = function() {
+        if(!$scope.q){
+                    return;
+        };
+            console.log(11111,$scope.q);
+
+        var newq = JSON.stringify($scope.q);
+        if($scope.oldq === newq || !$scope.q){
+                    return;
+        };
+        $scope.oldq = newq;
         $http({
             method: 'POST',
             url: $scope.indexUrl,
