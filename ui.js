@@ -1,4 +1,5 @@
 var _ = require('underscore');
+var request = require("request");
 
 function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
 
@@ -7,7 +8,7 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
         var baseUrl = '/'+ funId.toLowerCase();
         fun.commands = fun.commands || [];
 
-        fun.daregistrirdi = function(meniusRegistratori, ngRoutebisRegistratori,  nodesRoutebisRegistratori) {
+        return function(meniusRegistratori, ngRoutebisRegistratori,  nodesRoutebisRegistratori) {
             meniusRegistratori({menuPath: fun.menuId, href: toHref(fun.menuId)});
             if(fun.index) {
                 ngRoutebisRegistratori({url: baseUrl, templateUrl: "'" + baseUrl + "'", controller: 'ListViewController'});
@@ -60,6 +61,7 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
                         templateUrl: "function(route,path){ return '" + "templates" + baseUrl + "' + '/' + route.id; }", controller:'DetailController' 
                     });
                     var indexSegments = fun.index.split('/');
+                    
                     nodesRoutebisRegistratori({
                         method:'get',
                         url:detailViewUrl, 
@@ -94,7 +96,50 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
                 };
             }
         }
-        return fun;
+    }
+
+    function eventStream(fun){
+        return function(meniusRegistratori, ngRoutebisRegistratori,  nodesRoutebisRegistratori){
+            meniusRegistratori({ 
+                menuPath: "Streams", 
+                href: toHref("streams/$streams") 
+            });
+
+            ngRoutebisRegistratori({
+                url: "/streams/:streamid", 
+                templateUrl: "function(route){ return '/templates/streams/' + route.streamid; }", 
+                controller: 'DetailController'
+            });
+            nodesRoutebisRegistratori({
+                method:'get',
+                url: "/templates/streams/:streamid", 
+                handler: function(req, res) {
+
+                    request('http://192.168.100.5:2113/streams/' + req.route.params.streamid + '?format=json&embed=body', function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            var schema = getSchema(JSON.parse(body));
+                            res.render("templates/listview/detail.jade", {schema: schema});
+                        } else {
+
+                        }
+                        
+                    }).auth('admin', 'changeit', false)
+                }
+            });
+            nodesRoutebisRegistratori({
+                method:'get',
+                url: "/streams/:streamid", 
+                handler: function(req, res) {
+                    request('http://192.168.100.5:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            res.json(JSON.parse(body));
+                        } else {
+                            res.json(response);
+                        }
+                    }).auth('admin', 'changeit', false)
+                }
+            });
+        } 
     }
 
     var menusRegistraciebi = []
@@ -110,9 +155,11 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
     function nodesRoutebisRegistratori(r) {
         app[r.method](r.url,r.handler)
     }
-
+    
+    eventStream()(meniusRegistratori, ngRoutebisRegistratori, nodesRoutebisRegistratori);
+    
     funcionalebi.forEach(function(r){
-        funkcionali(r).daregistrirdi(meniusRegistratori, ngRoutebisRegistratori, nodesRoutebisRegistratori)
+        funkcionali(r)(meniusRegistratori, ngRoutebisRegistratori, nodesRoutebisRegistratori)
     });
 
     app.get('/api/getMenu',function(req,res) {
