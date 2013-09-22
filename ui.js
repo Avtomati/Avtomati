@@ -115,7 +115,7 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
                 url: "/templates/streams/:streamid", 
                 handler: function(req, res) {
 
-                    request('http://192.168.100.5:2113/streams/' + req.route.params.streamid + '?format=json&embed=body', function (error, response, body) {
+                    request('http://127.0.0.1:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
                         if (!error && response.statusCode == 200) {
                             var schema = getSchema(JSON.parse(body));
                             res.render("templates/listview/detail.jade", {schema: schema});
@@ -130,7 +130,7 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
                 method:'get',
                 url: "/streams/:streamid", 
                 handler: function(req, res) {
-                    request('http://192.168.100.5:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
+                    request('http://127.0.0.1:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
                         if (!error && response.statusCode == 200) {
                             res.json(JSON.parse(body));
                         } else {

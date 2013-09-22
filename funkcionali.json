@@ -19,6 +19,12 @@
                     "pid4": {"label": "პირადი ნომერი3"},
                     "pid5": {"label": "პირადი ნომერი3"}
                     }
+                },
+                {
+                "name": "DaakeliPasi",
+                "fields": {
+                    "pasdaklebisProcenti": {"label": "პასდაკლების პროცენტი"}
+                    }
                 }
         ]
     },
@@ -73,6 +79,13 @@
         "facet": "/api/Anvol/indexes/DocumentsByTags/facets/documents",
         "idField": "@id",
         "menuId": "MonacemtaBazebi/Anvol/Dokumentebi",
+        "commands": []
+    },
+    {
+        "index": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName",
+        "facet": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Posebi/Dokumentebi",
         "commands": []
     },
     {
