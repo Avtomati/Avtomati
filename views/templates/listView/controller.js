@@ -1,32 +1,23 @@
 function ListViewController($scope, $rootScope, $http, $modal, $location) {
     $scope.currentPage = 1;
-    $scope.$watch('indexUrl', function(v) {
-        var indexName = v.split('/')[4];
+    $scope.$watch('indexUrl', function(nv, ov) {
+        var indexName = nv.split('/')[4];
         $rootScope.$on(indexName + 'FacetChanged', function(e, args) {
             $scope.q = args;
-
             if ($scope.currentPage === 1) {
                 $scope.updateGridData();
             } else {
                 $scope.currentPage = 1;
             }
-            console.log(args);
+        });
+        $scope.$watch('currentPage', function(nv, ov) {
+            if(nv === ov)
+                return;
+            $scope.updateGridData();
         });
     });
-    $scope.$watch('currentPage', function() {
-        $scope.updateGridData();
-    });
-    $scope.updateGridData = function() {
-        if(!$scope.q){
-                    return;
-        };
-            console.log(11111,$scope.q);
 
-        var newq = JSON.stringify($scope.q);
-        if($scope.oldq === newq || !$scope.q){
-                    return;
-        };
-        $scope.oldq = newq;
+    $scope.updateGridData = function() {
         $http({
             method: 'POST',
             url: $scope.indexUrl,
