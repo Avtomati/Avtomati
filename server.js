@@ -38,8 +38,8 @@ ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
     },
     {
         DaamateAnketa:function(cmd, cb){
-            console.log(cmd);
-            cb();
+            cmd.shetanisTarigi = new Date();
+            require('./raven')().store(rhost,"Anketebi", "anketa/", cmd, {"Raven-Entity-Name": "Anketebi"}, cb);
         },
         Brdzaneba2:function(cmd, cb){
             console.log(cmd);
@@ -88,6 +88,7 @@ app.post('/api/:databaseName/indexes/:indexName/facets/:facetName',function(req,
     var requests = [
         getFacetRequest(indexName,facetName,withMlties)
     ];
+    console.log(requests[0]);
     multiGet(rhost,databaseName,requests,function(err,results){
         if(!err){
             var r1 = enrichFacetFromMetadata(results[0].Result.Results);

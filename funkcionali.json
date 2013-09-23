@@ -30,46 +30,23 @@
     },
     {
         "database": "Anketebi",
-        "index": "/api/Anketebi/indexes/Klientebi",
-        "facet": "/api/Anketebi/indexes/Klientebi/facets/klientebi",
-        "idField": "klientisId",
+        "index": "/api/Anketebi/indexes/Klientebi2",
+        "facet": "/api/Anketebi/indexes/Klientebi2/facets/klientebi2",
+        "idField": "baratisNomeri",
         "menuId": "Client Management",
         "commands": [
             {
                 "name": "DaamateAnketa",
                 "fields": {
-                    "pid": {
-                        "label": "პირადი ნომერი"
-                    },
-                    "firstName": {
-                        "label": "სახელი"
-                    },
-                    "lastName": {
-                        "label": "გვარი"
-                    },
-                    "birthDate": {
-                        "label": "დაბ. თარიღი",
-                        "type": "date"
-                    },
-                    "vip": {
-                        "label": "VIP",
-                        "type": "check"
-                    },
-                    "phone": {
-                        "label": "ტელეფონი"
-                    },
-                    "mail": {
-                        "label": "e-Mail"
-                    },
-                    "childrenBirthDates": {
-                        "label": "ბავშვების დაბ. თარიღები"
-                    },
-                    "cardNumber": {
-                        "label": "ბარათის ნომერი"
-                    },
-                    "discount": {
-                        "label": "დისქოუნთ პროცენტი"
-                    }
+                    "pid": { "label": "პირადი ნომერი"},
+                    "sakheli": {"label": "სახელი"},
+                    "gvari": {"label": "გვარი"},
+                    "dabTarigi": {"label": "დაბ. თარიღი","type": "date"},
+                    "mobiluri": {"label": "ტელეფონი"},
+                    "emaili": {"label": "e-Mail"},
+                    "bavshvebisDabTarigebi": {"label": "ბავშვების დაბ. თარიღები"},
+                    "baratisNomeri": {"label": "ბარათის ნომერი", "required": true},
+                    "fasdaklebisProcenti": {"label": "ფასდაკლების პროცენტი", "type":"int"}
                 }
             }
         ]

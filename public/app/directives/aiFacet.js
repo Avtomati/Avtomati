@@ -37,11 +37,12 @@ angular
         templateUrl:'templates/aiFacet',
         scope:{},
         controller: function($scope,$http){
+            console.log('facet controller:')
             $scope.selectedFacets = [];
             $scope.facets = [];
             $scope.updateFacetData = function(){
-                localStorageService.set('facet' + $location.path(), $scope.selectedFacets);
-                $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);                        
+                console.log('facet updateFacetData:')
+                                    
 
                 $http({
                     method:'POST',
@@ -64,6 +65,8 @@ angular
                             }
                             ,true
                         );
+                        localStorageService.set('facet' + $location.path(), $scope.selectedFacets);
+                        $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);    
                     });
             };
             $scope.apply = function(key, range){
@@ -101,6 +104,7 @@ angular
             };
         },
         link: function(scope, iElement, iAttrs){
+            console.log('facet link:')
             scope.aiUrl = iAttrs.aiUrl;
             scope.indexName = iAttrs.aiUrl.split('/')[4];
 
@@ -109,7 +113,10 @@ angular
             if(data){
                 scope.selectedFacets = data
             }
-            scope.updateFacetData();
+            scope.$watch('selectedFacets', function(){
+                scope.updateFacetData();
+            })
+            
         }
     };
 });
