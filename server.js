@@ -28,15 +28,26 @@ if (app.get('env') === 'production') {
 /*---Client Management----*/
 //app.get('/client')
 /*-------*/
-ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
-    ,  app
-    , function(db, index, where, skip, take, cb){
-        queryIndex(rhost, db, index, where, skip, take, cb);
-    }
-    , function(db, requests, cb){
-        multiGet(rhost, db, requests, cb);
-    },
-    {
+var commandHandlers = function(){
+    function tryParseToDate(str) {
+        var segments = str.split(/\.|\-|\//gi);
+        if(segments.length!=3){
+            return false;
+        }
+        var day = parseInt(segments[0]);
+        var month = parseInt(segments[1]);
+        var year = parseInt(segments[2]);
+        if(!day || !month || !year){
+            return false;
+        }
+        var strDate = year.toString()+'-'+month.toString()+'-'+day.toString();
+        var parsed = Date.parse(strDate);
+        if(!parsed){
+            return false;
+        }
+        return new Date(parsed);
+    };
+return  {
         DaamateAnketa:function(cmd, cb){
             var procenti = parseFloat(cmd.fasdaklebisProcenti, 10);
             if(!cmd.baratisNomeri){
@@ -49,6 +60,10 @@ ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
                 cmd.fasdaklebisProcenti = procenti < 1 ? procenti : procenti / 100.0;
             }
             cmd.shetanisTarigi = new Date();
+            cmd.bavshvebisDabTarigebi = (cmd.bavshvebisDabTarigebi || "")
+                .split(',')
+                .map(function(x){ return tryParseToDate(x.trim()) })
+                .filter(function(x){ return x });
             require('./raven')().store(rhost,"Anketebi", "anketa/", cmd, {"Raven-Entity-Name": "Anketebi"}, cb);
         },
         Brdzaneba2:function(cmd, cb){
@@ -60,6 +75,16 @@ ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
             cb();
         }
     }
+};
+ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
+    ,  app
+    , function(db, index, where, skip, take, cb){
+        queryIndex(rhost, db, index, where, skip, take, cb);
+    }
+    , function(db, requests, cb){
+        multiGet(rhost, db, requests, cb);
+    },
+    commandHandlers()
 );
 
 app.get('/', function index(req, res){

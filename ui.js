@@ -208,25 +208,6 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
 module.exports = start;
 
 
-function tryParseToDate(str) {
-    var segments = str.split(/\.|\-|\//gi);
-    if(segments.length!=3){
-        return false;
-    }
-    var day = parseInt(segments[0]);
-    var month = parseInt(segments[1]);
-    var year = parseInt(segments[2]);
-    if(!day || !month || !year){
-        return false;
-    }
-    var strDate = year.toString()+'-'+month.toString()+'-'+day.toString();
-    var parsed = Date.parse(strDate);
-    if(!parsed){
-        return false;
-    }
-    return new Date(parsed);
-};
-
 //menu generation functions
 function toHref(s){
     return '/#/'+toId(s).toLowerCase();
