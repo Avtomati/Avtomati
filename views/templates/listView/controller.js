@@ -1,24 +1,37 @@
 function ListViewController($scope, $rootScope, $http, $modal, $location) {
-    $scope.q = [];
     $scope.currentPage = 1;
-    $scope.$watch('indexUrl', function(v) {
-        var indexName = v.split('/')[4];
-        $rootScope.$on(indexName + 'FacetChanged', function(e, args) {
-            $scope.q = args;
-
-            if ($scope.currentPage === 1) {
+    $scope.queue = [];
+    $scope.grid = {}
+    console.log('ListViewController:', $scope.indexUrl);
+    $scope.$watch(function(){
+        return $location.path();
+    }, function(nv,ov){
+        console.log(nv, ov);
+    });
+    $scope.$watch('indexUrl', function(nv, ov) {
+        var indexName = nv.split('/')[4];
+        $scope.$watch('currentPage', function(nv, ov) {
+            console.log('currentPage:', nv, ov);
+            if(nv != ov ){
                 $scope.updateGridData();
+            }
+        });
+        $rootScope.$on(indexName + 'FacetChanged', function(e, args) {
+            console.log('$on(indexName + FacetChanged');
+            $scope.q = args;
+            if ($scope.currentPage === 1) {
+                if($scope.currentPage){
+                    $scope.updateGridData();
+                }
             } else {
                 $scope.currentPage = 1;
             }
         });
+    });
 
-    });
-    $scope.$watch('currentPage', function() {
-        $scope.updateGridData();
-    });
     $scope.updateGridData = function() {
-        $http({
+         console.log('updateGridData:');
+         $http({
             method: 'POST',
             url: $scope.indexUrl,
             data: {
@@ -27,10 +40,15 @@ function ListViewController($scope, $rootScope, $http, $modal, $location) {
                 pageSize: 5
             }
         }).success(function(data) {
-            $scope.grid = data;
+            $scope.grid.columns = data.columns;
+            $scope.grid.rows = data.rows;
+            $scope.grid.total = data.total;
+
+            //console.log(JSON.stringify($scope.grid,null,2));
         });
     };
     $scope.showDetailView = function(url, row) {
+        console.log('showDetailView:');
         var id = $scope.idField === "@id" ? row["@metadata"]["@id"] : row[$scope.idField];
         $location.path(url + "/" + encodeURIComponent(id));
     }

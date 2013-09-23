@@ -1,0 +1,82 @@
+[
+    {
+        "index": "/api/Anvol/indexes/refebi",
+        "facet": "/api/Anvol/indexes/refebi/facets/refs",
+        "idField": "Ref",
+        "menuId": "Produktebi",
+         "commands": [
+                {
+                "name": "Brdzaneba2",
+                "fields": {
+                    "pid2": {"label": "პირადი ნომერი2"},
+                    "sakheli": {"label": "სახელი"}
+                    }
+                },
+                {
+                "name": "Brdzaneba3",
+                "fields": {
+                    "pid3": {"label": "პირადი ნომერი3"},
+                    "pid4": {"label": "პირადი ნომერი3"},
+                    "pid5": {"label": "პირადი ნომერი3"}
+                    }
+                },
+                {
+                "name": "DaakeliPasi",
+                "fields": {
+                    "pasdaklebisProcenti": {"label": "პასდაკლების პროცენტი"}
+                    }
+                }
+        ]
+    },
+    {
+        "database": "Anketebi",
+        "index": "/api/Anketebi/indexes/Klientebi2",
+        "facet": "/api/Anketebi/indexes/Klientebi2/facets/klientebi2",
+        "idField": "baratisNomeri",
+        "menuId": "Client Management",
+        "commands": [
+            {
+                "name": "DaamateAnketa",
+                "fields": {
+                    "pid": { "label": "პირადი ნომერი"},
+                    "sakheli": {"label": "სახელი"},
+                    "gvari": {"label": "გვარი"},
+                    "dabTarigi": {"label": "დაბ. თარიღი","type": "date"},
+                    "mobiluri": {"label": "ტელეფონი"},
+                    "emaili": {"label": "e-Mail"},
+                    "bavshvebisDabTarigebi": {"label": "ბავშვების დაბ. თარიღები"},
+                    "baratisNomeri": {"label": "ბარათის ნომერი", "required": true},
+                    "fasdaklebisProcenti": {"label": "ფასდაკლების პროცენტი", "type":"int"}
+                }
+            }
+        ]
+    },
+    {
+        "index": "/api/Anvol/indexes/DocumentsByTags",
+        "facet": "/api/Anvol/indexes/DocumentsByTags/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Anvol/Dokumentebi",
+        "commands": []
+    },
+    {
+        "index": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName",
+        "facet": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Posebi/Dokumentebi",
+        "commands": []
+    },
+    {
+        "index": "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
+        "facet": "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        "idField": "@id",
+        "menuId": "MonacemtaBazebi/Anketebi/Dokumentebi",
+        "commands": []
+    },
+    {
+        "index": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName",
+        "facet": "/api/Posebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
+        "idField": "@id",
+        "menuId": "Posebi",
+        "commands": []
+    }
+]

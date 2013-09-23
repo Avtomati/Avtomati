@@ -1,223 +1,194 @@
-var path = require('path'),
-    _ = require('underscore'),
-    raven = require('./raven')(),
-    domain = require('./domain')(
-        {
-            store:function(id,doc,meta,cb) {
-                raven.store('http://office.anvol.ge:8080/','Anketebi', id, doc, meta, cb);
-            }
-        }),
-    fs = require('fs');
-    
-var db = [
-    {
-        index: "/api/Anvol/indexes/refebi",
-        facet: "/api/Anvol/indexes/refebi/facets/refs",
-        idField: "Ref",
-        menuId: "Produktebi",
-    }, {
-        database:'Anketebi',
-        index: "/api/Anketebi/indexes/Klientebi",
-        facet: "/api/Anketebi/indexes/Klientebi/facets/klientebi",
-        idField: "klientisId",
-        menuId: "Client Management",
-        commands:[
-            {
-                name:'DaamateAnketa',
-                fields:{
-                    'pid':{label:'პირადი ნომერი'},
-                    'firstName':{label:'სახელი'},
-                    'lastName':{label:'გვარი'},
-                    'birthDate':{label:'დაბ. თარიღი',type:'date'},
-                    'vip':{label:'VIP',type:'check'},
-                    'phone':{label:'ტელეფონი'},
-                    'mail':{label:'e-Mail'},
-                    'childrenBirthDates':{label:'ბავშვების დაბ. თარიღები'},
-                    'cardNumber':{label:'ბარათის ნომერი'},
-                    'discount':{label:'დისქოუნთ პროცენტი'}
-                },
-                handler:domain.daamateAnketa
-            }
-        ]
-    }, {
-        index: "/api/Anvol/indexes/DocumentsByTags",
-        facet: "/api/Anvol/indexes/DocumentsByTags/facets/documents",
-        idField: "@id",
-        menuId: "MonacemtaBazebi/Anvol/Dokumentebi",
-        commands:[]
-    }, {
-        index: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName",
-        facet: "/api/Anketebi/indexes/Raven%2FDocumentsByEntityName/facets/documents",
-        idField: "@id",
-        menuId: "MonacemtaBazebi/Anketebi/Dokumentebi",
-        commands:[]
-    }, {
-        menuId:'Home'
-    }, {
-        menuId:'Ai Directives'
-    }, {
-        menuId:'examples/ylinji/minji'
-    }
-];
+var _ = require('underscore');
+var request = require("request");
 
-//app.js generation functions
-function getAppFunctions(queryIndex, multiGet){
-    var ngRoutes = [];
-    db.forEach(function(fun){
+function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
+
+    function funkcionali(fun) {
         var funId = toId(fun.menuId);
         var baseUrl = '/'+ funId.toLowerCase();
         fun.commands = fun.commands || [];
-        if(fun.index){
-            ngRoutes.push({
-                url: baseUrl, templateUrl: "'" + baseUrl + "'", controller: 'ListViewController',
-                registerRoute:(
-                    function(){
-                        return function(app) {
-                            app.get(baseUrl, function(req,res){
-                                res.render("templates/listview/index.jade", {
-                                    url: baseUrl, facet: fun.facet, index: fun.index,
-                                    commands: fun.commands, idField: fun.idField
-                                });
+
+        return function(meniusRegistratori, ngRoutebisRegistratori,  nodesRoutebisRegistratori) {
+            meniusRegistratori({menuPath: fun.menuId, href: toHref(fun.menuId)});
+            if(fun.index) {
+                ngRoutebisRegistratori({url: baseUrl, templateUrl: "'" + baseUrl + "'", controller: 'ListViewController'});
+                nodesRoutebisRegistratori({
+                    method:'get',
+                    url:baseUrl, 
+                    handler: function(req,res) {
+                        res.render("templates/listview/index.jade", {
+                            url: baseUrl, facet: fun.facet, index: fun.index,
+                            commands: fun.commands, idField: fun.idField
+                        });
+                    }
+                });
+                fun.commands.forEach(function(cmd) {
+                    var commandUrl = baseUrl + "/" + cmd.name;
+                    ngRoutebisRegistratori({ url: commandUrl });
+                    nodesRoutebisRegistratori({
+                        method:'get',
+                        url: commandUrl, 
+                        handler: function(req,res){
+                            res.render("templates/commands/default.jade", {
+                                name:cmd.name, fields:cmd.fields
                             });
                         }
-                    }())
-            });
-            fun.commands.forEach(function(cmd){
-                var commandUrl = baseUrl + "/" + cmd.name;
-                ngRoutes.push({
-                    url: commandUrl,
-                    registerRoute:(
-                        function(){
-                            return function(app) {
-                                app.get(commandUrl, function(req,res){
-                                    res.render("templates/commands/default.jade", {
-                                        name:cmd.name, fields:cmd.fields
-                                    });
-                                });
-                                app.post(commandUrl,function(req,res){
-                                    //TODO: Validate, if error: 400
-                                    var model = req.body.model;
-                                    //validate();
-                                    cmd.handler(model,function(err){
-                                       if(!err){
-                                           res.status(201)
-                                       } else{
-                                            res.status(409);
-                                       }
-                                       res.end();
-                                    });
-                                });
-                            }
-                        }())
-                });
-            });
-
-            if(fun.idField){
-                var detailViewUrl = baseUrl + "/:id";
-                ngRoutes.push({
-                    url: detailViewUrl,
-                    templateUrl: "function(route,path){ return '" + "templates" + baseUrl + "' + '/' + route.id; }", controller:'DetailController',
-                    registerRoute:(
-                        function(){
-                            var indexSegments = fun.index.split('/');
-                            return function(app){
-                                app.get(detailViewUrl, function(req, res) {
-                                    var id = req.route.params.id;
-                                    var cb = function(err,rez){
-                                                res.json(rez);
-                                            };
-
-                                    if(fun.idField === "@id"){
-                                        multiGet(
-                                              indexSegments[2]
-                                            , [{path: "/docs/" + id, headers:{}}]
-                                            , function(err,rez){cb(err, rez[0].Result )});
-                                    }else{
-                                        queryIndex(
-                                              indexSegments[2]
-                                            , indexSegments[4]
-                                            , encodeURIComponent(fun.idField + ":" + id)
-                                            , 0 , 1
-                                            , function(err,rez){cb(err,rez.Results[0])});
-                                    }
-                                });
-                                app.get("/templates" + detailViewUrl, function(req, res) {
-                                    var id = req.route.params.id;
-                                    var cb = function(err,rez){
-                                                var schema = getSchema(rez);
-                                                res.render("templates/listview/detail.jade", {schema: schema});
-                                            };
-
-                                    if(fun.idField === "@id"){
-                                        multiGet(
-                                              indexSegments[2]
-                                            , [{path: "/docs/" + id, headers:{}}]
-                                            , function(err,rez){cb(err, rez[0].Result )});
-                                    }else{
-                                        queryIndex(
-                                              indexSegments[2]
-                                            , indexSegments[4]
-                                            , encodeURIComponent(fun.idField + ":" + id)
-                                            , 0 , 1
-                                            , function(err,rez){cb(err,rez.Results[0])});
-                                    }
-                                });
-                            }
-                        }())
-                });    
-            }
-        }else{
-          ngRoutes.push({
-                url:baseUrl,
-                templateUrl:"'"+getSpecificViewUrl(funId)+"'", 
-                controller:"'" + toControllerName(fun.menuId) + 'Controller' + "'",
-                registerRoute:(
-                    function(){
-                        return function(app){
-                            app.get(baseUrl,function(req, res) {
-                                res.render("templates/listview/index.jade");
+                    });
+                    nodesRoutebisRegistratori({
+                        method: 'post',
+                        url: commandUrl, 
+                        handler: function(req,res){
+                            //TODO: Validate, if error: 400
+                            var model = req.body.model;
+                            //validate();
+                            if(commandHandlers[cmd.name])
+                            
+                            commandHandlers[cmd.name](model, function(err){
+                                if(!err){
+                                    res.status(201)
+                                } else{
+                                    res.status(409);
+                                }
+                                res.end();
                             });
-                        };
-                    }())
-
-            });    
+                        }
+                    });
+                });
+                if(fun.idField){
+                    var detailViewUrl = baseUrl + "/:id";
+                    ngRoutebisRegistratori({ 
+                        url: detailViewUrl, 
+                        templateUrl: "function(route,path){ return '" + "templates" + baseUrl + "' + '/' + route.id; }", controller:'DetailController' 
+                    });
+                    var indexSegments = fun.index.split('/');
+                    
+                    nodesRoutebisRegistratori({
+                        method:'get',
+                        url:detailViewUrl, 
+                        handler: function(req, res) {
+                            var id = req.route.params.id;
+                            var cb = function(err,rez){
+                                res.json(rez);
+                            };
+                            if(fun.idField === "@id"){
+                                multiGet(indexSegments[2], [{path: "/docs/" + id, headers:{}}], function(err,rez){cb(err, rez[0].Result )});
+                            } else {
+                                queryIndex(indexSegments[2], indexSegments[4], encodeURIComponent(fun.idField + ":" + id), 0 , 1, function(err,rez){cb(err,rez.Results[0])});
+                            }
+                        }
+                    });
+                    nodesRoutebisRegistratori({
+                        method: 'get',
+                        url: '/templates' + detailViewUrl, 
+                        handler: function(req, res) {
+                            var id = req.route.params.id;
+                            var cb = function(err,rez){
+                                var schema = getSchema(rez);
+                                res.render("templates/listview/detail.jade", {schema: schema});
+                            };
+                            if(fun.idField === "@id"){
+                                multiGet(indexSegments[2], [{path: "/docs/" + id, headers:{}}], function(err,rez){cb(err, rez[0].Result )});
+                            } else {
+                                queryIndex(indexSegments[2], indexSegments[4], encodeURIComponent(fun.idField + ":" + id), 0 , 1, function(err,rez){cb(err,rez.Results[0])});
+                            }
+                        }
+                    });
+                };
+            }
         }
-    });
-    return ngRoutes;
-};
+    }
 
-function tryParseToDate(str){
-    var segments = str.split(/\.|\-|\//gi);
-    if(segments.length!=3){
-        return false;
+    function eventStream(fun){
+        return function(meniusRegistratori, ngRoutebisRegistratori,  nodesRoutebisRegistratori){
+            meniusRegistratori({ 
+                menuPath: "Streams", 
+                href: toHref("streams/$streams") 
+            });
+
+            ngRoutebisRegistratori({
+                url: "/streams/:streamid", 
+                templateUrl: "function(route){ return '/templates/streams/' + route.streamid; }", 
+                controller: 'DetailController'
+            });
+            nodesRoutebisRegistratori({
+                method:'get',
+                url: "/templates/streams/:streamid", 
+                handler: function(req, res) {
+
+                    request('http://127.0.0.1:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            var schema = getSchema(JSON.parse(body));
+                            res.render("templates/listview/detail.jade", {schema: schema});
+                        } else {
+
+                        }
+                        
+                    }).auth('admin', 'changeit', false)
+                }
+            });
+            nodesRoutebisRegistratori({
+                method:'get',
+                url: "/streams/:streamid", 
+                handler: function(req, res) {
+                    request('http://127.0.0.1:2113/streams/' + req.route.params.streamid + '?format=json', function (error, response, body) {
+                        if (!error && response.statusCode == 200) {
+                            res.json(JSON.parse(body));
+                        } else {
+                            res.json(response);
+                        }
+                    }).auth('admin', 'changeit', false)
+                }
+            });
+        } 
     }
-    var day = parseInt(segments[0]);
-    var month = parseInt(segments[1]);
-    var year = parseInt(segments[2]);
-    if(!day || !month || !year){
-        return false;
+
+    var menusRegistraciebi = []
+    function meniusRegistratori(r) {
+        menusRegistraciebi.push(r);       
     }
-    var strDate = year.toString()+'-'+month.toString()+'-'+day.toString();
-    var parsed = Date.parse(strDate);
-    if(!parsed){
-        return false;
+
+    var ngRoutebisRegistraciebi = []
+    function ngRoutebisRegistratori(r) {
+        ngRoutebisRegistraciebi.push(r)
     }
-    return new Date(parsed);
-};
-function start(app, queryIndex, multiGet){
-    var ngRoutes = getAppFunctions(queryIndex, multiGet);
-    ngRoutes.forEach(function(r){
-        if(r.registerRoute){
-            r.registerRoute(app);
-        }
+
+    function nodesRoutebisRegistratori(r) {
+        app[r.method](r.url,r.handler)
+    }
+    
+    eventStream()(meniusRegistratori, ngRoutebisRegistratori, nodesRoutebisRegistratori);
+    
+    funcionalebi.forEach(function(r){
+        funkcionali(r)(meniusRegistratori, ngRoutebisRegistratori, nodesRoutebisRegistratori)
     });
+
+    app.get('/api/getMenu',function(req,res) {
+        var trees = menusRegistraciebi.map(function(fun){
+            return toTree(fun.menuPath, fun.href);
+        });
+        var items = trees.reduce(function(memo,tree){
+            iterateTree(memo, tree);
+            return memo;
+        },{});
+        function A(item){
+            return _.map(item, function(value,name){
+                return {
+                    name:name,
+                    href:value.href,
+                    subItems: A(value.subItems)
+                }
+            });
+        };
+        res.json(A(items));
+    });
+
     app.get('/app.js',function(req,res){
-        var whens = ngRoutes
+        var whens = ngRoutebisRegistraciebi
                         .map(function(r){
-            return  "when("+
+            return "when("+
                 "'" + r.url + "'," +
-                "{"+
-                    "templateUrl: " + r.templateUrl + ", " +
+                "{" +
+                    "templateUrl:" + r.templateUrl + ", " +
                     "controller:" + r.controller + 
                 "})";
         }).join('.');
@@ -232,35 +203,11 @@ function start(app, queryIndex, multiGet){
         res.setHeader('Content-Type','application/javascript');
         res.send(appjs);
     });
-    app.get('/api/getMenu',function(req,res){
-        var trees = db.map(function(fun){
-            return toTree(fun.menuId, toHref(fun.menuId));
-        });
-        var items = trees.reduce(function(memo,tree){
-            iterateTree(memo,tree);
-            return memo;
-        },{});
-        function A(item){
-            return _.map(item, function(value,name){
-                return {
-                    name:name,
-                    href:value.href,
-                    subItems: A(value.subItems)
-                }
-            });
-        };
-        res.json(A(items));
-    });
-    app.get('/dynamic/*', function(req,res){
-        var p = req.url.slice(1);
-        if(fs.existsSync(path.join(app.get('views'), p) + '.jade')){
-            res.render(p);
-        }else{
-            res.render(p + '/index');
-        }
-    });
 };
-module.exports = {start:start};
+
+module.exports = start;
+
+
 //menu generation functions
 function toHref(s){
     return '/#/'+toId(s).toLowerCase();

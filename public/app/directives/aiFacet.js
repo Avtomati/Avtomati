@@ -31,21 +31,19 @@ function mergeLeft(l, r, getkey, actEq, del){
 
 angular
     .module('app')
-    .directive('aiFacet',function(localStorageService, $location){
+    .directive('aiFacet', function(localStorageService, $location){
     return {
         restrict:'E',
         templateUrl:'templates/aiFacet',
         scope:{},
-        controller:function($scope,$http){
+        controller: function($scope,$http){
+            console.log('facet controller:')
             $scope.selectedFacets = [];
             $scope.facets = [];
             $scope.updateFacetData = function(){
-                var newq = $scope.selectedFacets.map(function(x){return {key:x.key,values:x.values}});
-                newq = JSON.stringify(newq);
-                if(newq == $scope.oldq){
-                    return;
-                }
-                $scope.oldq = newq;
+                console.log('facet updateFacetData:')
+                                    
+
                 $http({
                     method:'POST',
                     url:$scope.aiUrl,
@@ -68,7 +66,7 @@ angular
                             ,true
                         );
                         localStorageService.set('facet' + $location.path(), $scope.selectedFacets);
-                        $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);
+                        $scope.$emit($scope.indexName+'FacetChanged', $scope.selectedFacets);    
                     });
             };
             $scope.apply = function(key, range){
@@ -106,13 +104,19 @@ angular
             };
         },
         link: function(scope, iElement, iAttrs){
+            console.log('facet link:')
             scope.aiUrl = iAttrs.aiUrl;
             scope.indexName = iAttrs.aiUrl.split('/')[4];
+
             var data = localStorageService.get('facet' + $location.path());
+
             if(data){
                 scope.selectedFacets = data
             }
-            scope.updateFacetData();
+            scope.$watch('selectedFacets', function(){
+                scope.updateFacetData();
+            })
+            
         }
     };
 });
