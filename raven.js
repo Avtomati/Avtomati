@@ -2,6 +2,9 @@ var request = require('request');
 function bulkPost(host, db, operations, cb) {
     request.post({
         url: host + 'databases/' + db + '/bulk_docs',
+        headers:{
+            'Content-Type': 'application/json; charset=utf-8'
+        },
         body: JSON.stringify(operations)
     }, function (error, response, resBody) {
         if (!error && response.statusCode === 200) {

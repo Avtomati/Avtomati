@@ -38,6 +38,16 @@ ui(  JSON.parse(fs.readFileSync('funkcionali.json'))
     },
     {
         DaamateAnketa:function(cmd, cb){
+            var procenti = parseFloat(cmd.fasdaklebisProcenti, 10);
+            if(!cmd.baratisNomeri){
+                cb(new Error("baratisNomeri"));
+                return;
+            }
+            if(isNaN(procenti) || !procenti){
+                cmd.fasdaklebisProcenti = null;
+            }else{
+                cmd.fasdaklebisProcenti = procenti < 1 ? procenti : procenti / 100.0;
+            }
             cmd.shetanisTarigi = new Date();
             require('./raven')().store(rhost,"Anketebi", "anketa/", cmd, {"Raven-Entity-Name": "Anketebi"}, cb);
         },
