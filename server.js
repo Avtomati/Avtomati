@@ -64,6 +64,8 @@ return  {
                 .split(',')
                 .map(function(x){ return tryParseToDate(x.trim()) })
                 .filter(function(x){ return x });
+            var sackisiTankha = parseFloat(cmd.sackisiTankha);
+            cmd.sackisiTankha = isNaN(sackisiTankha) ? 0.0 : sackisiTankha;
             require('./raven')().store(rhost,"Anketebi", "anketa/", cmd, {"Raven-Entity-Name": "Anketebi"}, cb);
         },
         Brdzaneba2:function(cmd, cb){

@@ -46,7 +46,8 @@
                     "emaili": {"label": "e-Mail"},
                     "bavshvebisDabTarigebi": {"label": "ბავშვების დაბ. თარიღები"},
                     "baratisNomeri": {"label": "ბარათის ნომერი", "required": true},
-                    "fasdaklebisProcenti": {"label": "ფასდაკლების პროცენტი", "type":"int"}
+                    "fasdaklebisProcenti": {"label": "ფასდაკლების პროცენტი", "type":"int"},
+                    "sackisiTankha": {"label": "საწყისი თანხა"}
                 }
             }
         ]
