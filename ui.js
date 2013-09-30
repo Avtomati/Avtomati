@@ -192,7 +192,7 @@ function start(funcionalebi, app, queryIndex, multiGet, commandHandlers){
                     "controller:" + r.controller + 
                 "})";
         }).join('.');
-        var appjs = "angular.module('app', ['ui.bootstrap','LocalStorageModule'], function($routeProvider,$locationProvider){"+
+        var appjs = "angular.module('app', ['ngRoute','ui.bootstrap','LocalStorageModule'], function($routeProvider,$locationProvider){"+
             "$routeProvider."+
             whens +
             ".otherwise({"+
